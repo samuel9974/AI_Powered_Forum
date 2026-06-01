@@ -3,6 +3,9 @@ import express from 'express';
 import cors from 'cors';
 import db from './db/db.config.js';
 import { errorHandler } from './src/middleware/error-handler.js';
+import { mainRouter } from "./src/api/routes.js";
+
+
 
 const app = express();
 const port = process.env.PORT || 3777;
@@ -16,6 +19,11 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
 });
+
+//main route
+
+app.use("/api", mainRouter);
+
 
 app.use(errorHandler);
 
