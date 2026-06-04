@@ -47,6 +47,7 @@ export const registerService = async ({
   }
 
   // every time we call bcrypt.genSalt, it generates a new random salt string.
+  // 
   const salt = await bcrypt.genSalt(10); // generates a unique random salt each call
   const hashedPassword = await bcrypt.hash(password, salt);
   const sql =

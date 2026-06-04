@@ -229,9 +229,7 @@ export default function Auth() {
                   {isLogin ? 'Sign in to your account' : 'Create an account'}
                 </h2>
                 <p className={styles.auth__formSubtitle}>
-                  {isLogin
-                    ? 'Enter your email address and password to continue.'
-                    : 'Complete the form below to create your account.'}
+                  {isLogin? 'Enter your email address and password to continue.' : 'Complete the form below to create your account.'}
                 </p>
               </div>
 
@@ -353,9 +351,7 @@ export default function Auth() {
 
               <footer className={styles.auth__formFooter}>
                 <p className={styles.auth__formFooterText}>
-                  {isLogin
-                    ? "Don't have an account?"
-                    : 'Already have an account?'}
+                  {isLogin? "Don't have an account?": 'Already have an account?'}
                   <button
                     onClick={() => setIsLogin(!isLogin)}
                     className={styles.auth__formFooterLink}
