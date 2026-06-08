@@ -3,6 +3,7 @@ import { safeExecute } from "../../../../db/db.config.js";
 import { BadRequestError, NotFoundError } from "../../../utils/errors/index.js";
 
 import {
+  findSimilarQuestionsByQuestionId,
   generateQuestionEmbedding,
   normalizeQuestionText,
   storeQuestionVector,
@@ -10,14 +11,7 @@ import {
   getVectorConfig,
 } from "./vector.service.js";
 
-// import {
-//   findSimilarQuestionsByQuestionId,
-//   findSimilarQuestionsByText,
-//   generateQuestionEmbedding,
-//   getVectorConfig,
-//   normalizeQuestionText,
-//   storeQuestionVector,
-// } from "./vector.service.js";
+
 
 /**
  * Creates a new question and stores its vector embedding for semantic search.
@@ -137,7 +131,8 @@ export const getQuestionsService = async (filters) => {
   const normalizedSortOrder = "DESC";
 
   const { whereClause, params } = buildQuestionFilters(filters);
-
+  console.log(whereClause);
+  console.log(params);
   const listSql = `
     SELECT
       q.question_id AS id,
@@ -202,6 +197,8 @@ const buildQuestionFilters = (filters) => {
   if (conditions.length === 0) {
     return { whereClause: "", params };
   }
+  // console.log('conditions', conditions);
+  // console.log('params', params);
 
   return {
     whereClause: `WHERE ${conditions.join(" AND ")}`,
@@ -226,14 +223,9 @@ export const searchQuestionsSemanticService = async ({
   const sourceText = normalizeQuestionText({ title: query });
   const vectorConfig = getVectorConfig();
 
-  const searchThreshold =
-    threshold !== undefined ? threshold : vectorConfig.recommendThreshold;
+  const searchThreshold = threshold !== undefined ? threshold : vectorConfig.recommendThreshold;
 
-  const result = await findSimilarQuestionsByText({
-    sourceText,
-    threshold: searchThreshold,
-    k,
-  });
+  const result = await findSimilarQuestionsByText({sourceText, threshold: searchThreshold, k});
 
   return {
     data: result.similarQuestions,
@@ -246,7 +238,6 @@ export const searchQuestionsSemanticService = async ({
   };
 };
 
-
 /**
  * Retrieves a single question with answers. Max 100 answers.
  *
@@ -255,7 +246,39 @@ export const searchQuestionsSemanticService = async ({
  * @returns {Promise<Object>} Object containing the question and answers.
  * @throws {NotFoundError} If the question is not found.
  */
-export const getSingleQuestionService = async ({ questionHash, includeAnswers = true }) => {
+
+export const getSimilarQuestionsService = async ({questionHash, k = 5, threshold}) => {
+
+  const questionRows = await safeExecute(
+    "SELECT question_id AS id FROM questions WHERE question_hash = ? LIMIT 1",
+    [questionHash],
+  );
+
+  if (questionRows.length === 0) {
+    throw new NotFoundError("Question not found");
+  }
+
+  const questionId = questionRows[0].id;
+  const vectorConfig = getVectorConfig();
+
+  const searchThreshold =
+    threshold !== undefined ? threshold : vectorConfig.recommendThreshold;
+
+  const similarQuestions = await findSimilarQuestionsByQuestionId({questionId, threshold: searchThreshold, k});
+
+  return {
+    data: similarQuestions,
+    meta: {
+      total: similarQuestions.length,
+      k,
+      threshold: searchThreshold,
+      query: null,
+      questionHash,
+    },
+  };
+};
+
+export const getSingleQuestionService = async ({questionHash, includeAnswers = true}) => {
   const normalizedAnswerLimit = 100; // Fixed max 100 records
 
   const questionSql = `
@@ -291,8 +314,6 @@ export const getSingleQuestionService = async ({ questionHash, includeAnswers = 
 
   const question = questionRows[0];
   const questionId = question.id;
-
-  
 
   const answersSql = `
   SELECT
@@ -346,3 +367,4 @@ export const getSingleQuestionService = async ({ questionHash, includeAnswers = 
     },
   };
 };
+

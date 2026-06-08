@@ -4,10 +4,13 @@ import {
   getQuestionsService,
   searchQuestionsSemanticService,
   getSingleQuestionService,
-  assessAnswerAgainstQuestionService,
+  getSimilarQuestionsService,
 } from "../service/question.service.js";
 
-/**
+import { assessAnswerAgainstQuestionService, generateQuestionDraftCoachService } 
+from "../service/geminiTextCoach.service.js";
+
+/** 
  * Handles posting a new question.
  *
  * @param {import('express').Request} req - The Express request object.
@@ -104,9 +107,7 @@ export const getSingleQuestionController = async (req, res, next) => {
   try {
     const { questionHash } = req.params;
 
-    const result = await getSingleQuestionService({
-      questionHash,
-    });
+    const result = await getSingleQuestionService({questionHash});
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -117,6 +118,64 @@ export const getSingleQuestionController = async (req, res, next) => {
     next(error);
   }
 };
+
+
+/**
+ * Handles fetching questions similar to an existing question.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>}
+ */
+export const getSimilarQuestionsController = async (req, res, next) => {
+  try {
+    const { questionHash } = req.params;
+
+    const result = await getSimilarQuestionsService({
+      questionHash,
+      k: req.query.k ? Number(req.query.k) : 5,
+      threshold:
+        req.query.threshold !== undefined
+          ? Number(req.query.threshold)
+          : undefined,
+    });
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Similar questions fetched successfully",
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/**
+ * Handles generating draft suggestions for a question.
+ *
+ * @param {import('express').Request} req - The Express request object.
+ * @param {import('express').Response} res - The Express response object.
+ * @param {import('express').NextFunction} next - The Express next function.
+ * @returns {Promise<void>}
+ */
+export const generateQuestionDraftCoachController = async (req, res, next) => {
+  try {
+    const { title, content } = req.body;
+
+    const data = await generateQuestionDraftCoachService({title,content});
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Draft suggestions generated.",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 
 /**

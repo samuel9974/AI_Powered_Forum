@@ -8,7 +8,7 @@ import { mainRouter } from "./src/api/routes.js";
 
 
 const app = express();
-const port = process.env.PORT || 3777;
+const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors( ));
@@ -31,7 +31,7 @@ async function startServer() {
   try {
     const connection = await db.getConnection();
     connection.release();
-    console.log('Successfully connected to the database');
+    console.log(`Successfully connected to the database: ${process.env.DB_NAME}`);
   } catch (error) {
     console.error('Error connecting DB (continuing):', error.message);
   }

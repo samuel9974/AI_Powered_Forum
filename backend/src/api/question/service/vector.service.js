@@ -2,7 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { safeExecute } from "../../../../db/db.config.js";
 import { ServiceUnavailableError } from "../../../utils/errors/index.js";
 
-const GEMINI_EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001";
+const GEMINI_EMBEDDING_MODEL =
+  process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -14,6 +15,7 @@ if (!GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is required");
 }
 
+//initialize the Gemini API client with the API 
 const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 /**
@@ -191,16 +193,13 @@ export function getVectorConfig() {
  */
 export async function findSimilarQuestionsByText({ sourceText, threshold, k }) {
   // Normalize parameters
-  const normalizedK = k > 0 ? Math.min(k, 10) : RECOMMEND_K;
-  const normalizedThreshold =
-    threshold >= 0 && threshold <= 1 ? threshold : RECOMMEND_THRESHOLD;
+  const normalizedK = k || RECOMMEND_K;
+  const normalizedThreshold = threshold || RECOMMEND_THRESHOLD;
 
   // Use RETRIEVAL_QUERY task type when searching against stored documents
   let embeddingResult;
   try {
-    embeddingResult = await generateQuestionEmbedding(sourceText, {
-      taskType: "RETRIEVAL_QUERY",
-    });
+    embeddingResult = await generateQuestionEmbedding(sourceText, {taskType: "RETRIEVAL_QUERY"});
   } catch (error) {
     console.error("=== GEMINI API ERROR DURING SEARCH ===");
     console.error("Operation: findSimilarQuestionsByText");
@@ -217,11 +216,8 @@ export async function findSimilarQuestionsByText({ sourceText, threshold, k }) {
   // Retrieve all ready embeddings from MySQL
   let storedEmbeddings;
   try {
-    storedEmbeddings = await retrieveReadyEmbeddings();
+    storedEmbeddings = await retrieveReadyEmbeddings();// give all embeding from the database that are ready to use
   } catch (error) {
-    // console.error("=== DATABASE ERROR DURING SEARCH ===");
-    // console.error("Operation: findSimilarQuestionsByText");
-    // console.error("Search text:", sourceText);
     console.error("Error:", error);
     throw error;
   }
@@ -247,18 +243,19 @@ export async function findSimilarQuestionsByText({ sourceText, threshold, k }) {
       );
       continue;
     }
-    // Sort by score descending
-    similarities.sort((a, b) => b.score - a.score);
+  }
 
-    // Limit to top k results
-    const topResults = similarities.slice(0, normalizedK);
+  // Sort by score descending
+  similarities.sort((a, b) => b.score - a.score);
 
-    if (topResults.length === 0) {
-      return {
-        ...embeddingResult,
-        similarQuestions: [],
-      };
-    }
+  // Limit to top k results
+  const topResults = similarities.slice(0, normalizedK);
+
+  if (topResults.length === 0) {
+    return {
+      ...embeddingResult,
+      similarQuestions: [],
+    };
   }
 
   // Fetch question details using IN clause
@@ -354,8 +351,12 @@ export function calculateCosineSimilarity(vectorA, vectorB) {
   }
 
   // Calculate magnitudes (lengths) of vectors
-  const magnitudeA = Math.sqrt(vectorA.reduce((sum, val) => sum + val * val, 0));
-  const magnitudeB = Math.sqrt(vectorB.reduce((sum, val) => sum + val * val, 0));
+  const magnitudeA = Math.sqrt(
+    vectorA.reduce((sum, val) => sum + val * val, 0),
+  );
+  const magnitudeB = Math.sqrt(
+    vectorB.reduce((sum, val) => sum + val * val, 0),
+  );
 
   // Calculate cosine similarity
   const similarity = dotProduct / (magnitudeA * magnitudeB);
@@ -379,7 +380,7 @@ async function retrieveReadyEmbeddings() {
   `;
 
   try {
-    const rows = await safeExecute(sql, ['ready']);
+    const rows = await safeExecute(sql, ["ready"]);
 
     // Parse and validate embeddings
     const embeddings = [];
@@ -389,7 +390,7 @@ async function retrieveReadyEmbeddings() {
         // The database driver might already parse JSON columns into objects/arrays.
         // If it's already an array, use it directly; otherwise, parse it.
         const embedding =
-          typeof row.embedding === 'string'
+          typeof row.embedding === "string"
             ? JSON.parse(row.embedding)
             : row.embedding;
 
@@ -411,4 +412,139 @@ async function retrieveReadyEmbeddings() {
   } catch (error) {
     throw error;
   }
+}
+
+/**
+ * Find similar questions using the pre-calculated embedding of an existing question from MySQL.
+ * @param {Object} params - Search parameters.
+ * @param {number|string} params.questionId - The ID of the question to find similarities for.
+ * @param {number} [params.threshold] - Minimum similarity score threshold.
+ * @param {number} [params.k] - Maximum number of results to return.
+ * @returns {Promise<Array<Object>>} A list of similar questions.
+ */
+export async function findSimilarQuestionsByQuestionId({ questionId, threshold, k }) {
+  const normalizedK = k > 0 ? Math.min(k, 20) : RECOMMEND_K;
+  const normalizedThreshold =
+    threshold >= 0 && threshold <= 1 ? threshold : RECOMMEND_THRESHOLD;
+  const sourceQuestionId = Number(questionId);
+
+  const sql = `
+    SELECT embedding, status
+    FROM question_vectors
+    WHERE question_id = ?
+  `;
+
+  const rows = await safeExecute(sql, [sourceQuestionId]);
+
+  if (rows.length === 0 || rows[0].status !== "ready") {
+    return [];
+  }
+
+  let sourceEmbedding;
+
+  try {
+    sourceEmbedding =
+      typeof rows[0].embedding === "string"
+        ? JSON.parse(rows[0].embedding)
+        : rows[0].embedding;
+
+    if (
+      !Array.isArray(sourceEmbedding) ||
+      sourceEmbedding.length === 0 ||
+      !sourceEmbedding.every((v) => typeof v === "number" && !isNaN(v))
+    ) {
+      console.warn(`Source question ${sourceQuestionId} has invalid embedding`);
+      return [];
+    }
+  } catch (parseError) {
+    console.warn(
+      `Failed to parse embedding for question ${sourceQuestionId}:`,
+      parseError.message,
+    );
+    return [];
+  }
+
+  const storedEmbeddings = await retrieveReadyEmbeddings();
+  const similarities = [];
+
+  for (const stored of storedEmbeddings) {
+    if (stored.questionId === sourceQuestionId) {
+      continue;
+    }
+
+    try {
+      const score = calculateCosineSimilarity(
+        sourceEmbedding,
+        stored.embedding,
+      );
+
+      if (score >= normalizedThreshold) {
+        similarities.push({
+          questionId: stored.questionId,
+          score,
+        });
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to calculate similarity for question ${stored.questionId}:`,
+        error.message,
+      );
+    }
+  }
+
+  similarities.sort((a, b) => b.score - a.score);
+  const topResults = similarities.slice(0, normalizedK);
+
+  if (topResults.length === 0) {
+    return [];
+  }
+
+  const questionIds = topResults.map((r) => r.questionId);
+  const placeholders = questionIds.map(() => "?").join(",");
+
+  const detailsSql = `
+    SELECT
+      q.question_id AS questionId,
+      q.question_hash AS questionHash,
+      q.title,
+      q.content,
+      q.created_at AS createdAt,
+      q.updated_at AS updatedAt,
+      u.user_id AS userId,
+      u.first_name AS firstName,
+      u.last_name AS lastName,
+      COUNT(DISTINCT a.answer_id) AS answerCount
+    FROM questions q
+    JOIN users u ON u.user_id = q.user_id
+    LEFT JOIN answers a ON a.question_id = q.question_id
+    WHERE q.question_id IN (${placeholders})
+    GROUP BY q.question_id, u.user_id
+  `;
+
+  const detailRows = await safeExecute(detailsSql, questionIds);
+  const questionMap = {};
+
+  detailRows.forEach((row) => {
+    questionMap[String(row.questionId)] = {
+      id: row.questionId,
+      questionHash: row.questionHash,
+      title: row.title,
+      content: row.content,
+      answerCount: row.answerCount,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      author: {
+        id: row.userId,
+        firstName: row.firstName,
+        lastName: row.lastName,
+      },
+    };
+  });
+
+  return topResults
+    .filter((result) => questionMap[String(result.questionId)])
+    .map((result) => ({
+      score: Number(result.score.toFixed(6)),
+      ...questionMap[String(result.questionId)],
+    }));
 }
