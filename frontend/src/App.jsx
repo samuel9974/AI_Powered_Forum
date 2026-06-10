@@ -26,7 +26,7 @@ function App() {
             <Route path='/dashboard' element={<ProtectedRoute> <Dashboard /></ProtectedRoute> }/>
             <Route path='/questions/ask' element={<ProtectedRoute><h1>Ask a Question Page</h1></ProtectedRoute>} />
             <Route path='/my-questions' element={<ProtectedRoute><h1>My Questions Page</h1></ProtectedRoute>} />
-            <Route path='/question/:id' element={<ProtectedRoute><h1>Question Detail Page</h1></ProtectedRoute>} />
+            <Route path='/questions/:questionHash' element={<ProtectedRoute><h1>Question Detail Page</h1></ProtectedRoute>} />
             <Route path='/rag-documents' element={<ProtectedRoute><h1>RAG Documents Page</h1></ProtectedRoute>} />
           </Route>
 
