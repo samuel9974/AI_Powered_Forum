@@ -210,14 +210,17 @@
 
 .dashboard__feedBody {
   min-height: 8rem;
-  background-color: var(--surface-container-low);
+  background-color: var(--surface);
 }
 
 .dashboard__list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
   margin: 0;
-  padding: var(--spacing-lg);
+  padding: 0;
   list-style: none;
+}
+
+.dashboard__list > li:last-child > * {
+  border-bottom: none;
 }

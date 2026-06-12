@@ -11,6 +11,9 @@ import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import Auth from './pages/Auth/Auth';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Landing from './pages/Landing/Landing';
+import MyQuestions from './pages/MyQuestions/MyQuestions';
+import PostQuestion from './pages/PostQuestion/PostQuestion';
+import QuestionDetail from './pages/QuestionDetail/QuestionDetail';
 
 function App() {
   return (
@@ -24,9 +27,30 @@ function App() {
           {/* Protected routes with Layout */}
           <Route element={<Layout />}>
             <Route path='/dashboard' element={<ProtectedRoute> <Dashboard /></ProtectedRoute> }/>
-            <Route path='/questions/ask' element={<ProtectedRoute><h1>Ask a Question Page</h1></ProtectedRoute>} />
-            <Route path='/my-questions' element={<ProtectedRoute><h1>My Questions Page</h1></ProtectedRoute>} />
-            <Route path='/questions/:questionHash' element={<ProtectedRoute><h1>Question Detail Page</h1></ProtectedRoute>} />
+            <Route
+              path='/questions/ask'
+              element={
+                <ProtectedRoute>
+                  <PostQuestion />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/my-questions'
+              element={
+                <ProtectedRoute>
+                  <MyQuestions />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/questions/:questionHash'
+              element={
+                <ProtectedRoute>
+                  <QuestionDetail />
+                </ProtectedRoute>
+              }
+            />
             <Route path='/rag-documents' element={<ProtectedRoute><h1>RAG Documents Page</h1></ProtectedRoute>} />
           </Route>
 

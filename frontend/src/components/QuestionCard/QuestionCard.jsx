@@ -4,11 +4,11 @@ import { timeAgo } from '../../lib/utils.js';
 import styles from './QuestionCard.module.css';
 
 const AVATAR_PALETTES = [
-  { background: '#0ea5e9', color: '#ffffff' },
-  { background: '#14b8a6', color: '#ffffff' },
-  { background: '#22c55e', color: '#ffffff' },
-  { background: '#8b5cf6', color: '#ffffff' },
-  { background: '#6366f1', color: '#ffffff' },
+  { background: '#38bdf8', color: '#ffffff' },
+  { background: '#2dd4bf', color: '#ffffff' },
+  { background: '#4ade80', color: '#ffffff' },
+  { background: '#a78bfa', color: '#ffffff' },
+  { background: '#818cf8', color: '#ffffff' },
 ];
 
 function getInitials(author) {
@@ -82,7 +82,7 @@ export default function QuestionCard({ question, isOwn = false }) {
       aria-label={`Open question: ${question.title}`}
     >
       {isOwn ? (
-        <span className={styles.questionCard__badge}>Yours</span>
+        <span className={styles.questionCard__badge}>YOURS</span>
       ) : null}
 
       <div

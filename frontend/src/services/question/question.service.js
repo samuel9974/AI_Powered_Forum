@@ -16,7 +16,7 @@ function handleQuestionError(error) {
   const backendMessage =
     error.response.data?.msg || error.response.data?.message;
 
-  return new Error(backendMessage || 'Failed to load questions.');
+  return new Error(backendMessage || 'Request failed. Please try again.');
 }
 
 /**
@@ -53,7 +53,94 @@ async function searchQuestionsSemantic(query, options = {}) {
   }
 }
 
+/**
+ * Creates a new forum question.
+ * @param {{ title: string, content: string }} payload
+ * @returns {Promise<Object>}
+ */
+async function createQuestion({ title, content }) {
+  try {
+    const response = await apiClient.post('/api/questions', { title, content });
+    return response.data.data ?? null;
+  } catch (error) {
+    throw handleQuestionError(error);
+  }
+}
+
+/**
+ * AI draft coach tips for a question draft.
+ * @param {{ title?: string, content: string }} payload
+ * @returns {Promise<{ tips: string[] }>}
+ */
+async function generateQuestionDraftCoach({ title, content }) {
+  try {
+    const response = await apiClient.post('/api/questions/draft-coach', {
+      title,
+      content,
+    });
+    return response.data.data ?? { tips: [] };
+  } catch (error) {
+    throw handleQuestionError(error);
+  }
+}
+
+/**
+ * Fetches a single question thread with answers.
+ * @param {string} questionHash
+ * @returns {Promise<{ question: Object, answers: Array }>}
+ */
+async function getSingleQuestion(questionHash) {
+  try {
+    const response = await apiClient.get(`/api/questions/${questionHash}`);
+    return {
+      question: response.data.question ?? null,
+      answers: response.data.answers ?? [],
+    };
+  } catch (error) {
+    throw handleQuestionError(error);
+  }
+}
+
+/**
+ * AI relevance check for an answer draft.
+ * @param {string} questionHash
+ * @param {string} answerText
+ * @returns {Promise<{ level: string, note: string }>}
+ */
+async function assessAnswerFit(questionHash, answerText) {
+  try {
+    const response = await apiClient.post(
+      `/api/questions/${questionHash}/answer-fit`,
+      { answerText },
+    );
+    return response.data.data ?? { level: 'partial', note: '' };
+  } catch (error) {
+    throw handleQuestionError(error);
+  }
+}
+
+/**
+ * Similar questions for the related sidebar.
+ * @param {string} questionHash
+ * @returns {Promise<Array>}
+ */
+async function getSimilarQuestions(questionHash) {
+  try {
+    const response = await apiClient.get(
+      `/api/questions/${questionHash}/similar`,
+    );
+    return response.data.data ?? [];
+  } catch (error) {
+    throw handleQuestionError(error);
+  }
+}
+
 export const questionService = {
   getQuestions,
   searchQuestionsSemantic,
+  createQuestion,
+  generateQuestionDraftCoach,
+  getSingleQuestion,
+  assessAnswerFit,
+  getSimilarQuestions,
 };

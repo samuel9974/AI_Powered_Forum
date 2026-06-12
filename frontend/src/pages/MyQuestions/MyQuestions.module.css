@@ -1,0 +1,112 @@
+.myQuestions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.myQuestions__hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.myQuestions__heroCopy {
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+
+.myQuestions__kicker {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.myQuestions__title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: clamp(1.5rem, 2.5vw, var(--text-3xl));
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.myQuestions__lead {
+  margin: 0;
+  max-width: 42rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.myQuestions__newBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.15rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-inverse);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-hover) 100%
+  );
+  border: none;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.myQuestions__newBtn:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.myQuestions__newBtn:active {
+  transform: scale(0.98);
+}
+
+.myQuestions__newBtn:focus {
+  outline: none;
+}
+
+.myQuestions__newBtn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.myQuestions__feed {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.myQuestions__feedBody {
+  min-height: 8rem;
+  background-color: var(--surface);
+}
+
+.myQuestions__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.myQuestions__list > li:last-child > * {
+  border-bottom: none;
+}
