@@ -16,6 +16,11 @@ export function mapDocumentToResponse(row) {
   };
 }
 
+export function mapDocumentToListItem(row) {
+  const { user_id, storage_path, ...listItem } = mapDocumentToResponse(row);
+  return listItem;
+}
+
 export async function insertDocumentRecord({
   userId,
   title,
@@ -74,6 +79,25 @@ export async function fetchDocumentById(documentId) {
   return rows[0] ?? null;
 }
 
+export async function fetchDocumentsByUserId(userId) {
+  const sql = `
+    SELECT
+      document_id,
+      title,
+      mime_type,
+      byte_size,
+      status,
+      error_message,
+      created_at,
+      updated_at
+    FROM documents
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+  `;
+
+  return safeExecute(sql, [userId]);
+}
+
 export async function updateDocumentStatus({
   documentId,
   status,
@@ -86,6 +110,15 @@ export async function updateDocumentStatus({
   `;
 
   await safeExecute(sql, [status, errorMessage, documentId]);
+}
+
+export async function deleteDocumentById(documentId) {
+  const sql = `
+    DELETE FROM documents
+    WHERE document_id = ?
+  `;
+
+  await safeExecute(sql, [documentId]);
 }
 
 export async function deleteDocumentChunksByDocumentId(documentId) {

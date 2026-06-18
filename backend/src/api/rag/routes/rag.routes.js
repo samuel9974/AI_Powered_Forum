@@ -5,8 +5,13 @@ import {
   handlePdfUpload,
 } from "../../../middleware/rag.upload.js";
 import { createDocumentController } from "../controller/create-document.controller.js";
+import { deleteDocumentController } from "../controller/delete-document.controller.js";
+import { getDocumentFileController } from "../controller/get-document-file.controller.js";
+import { getDocumentMetaController } from "../controller/get-document-meta.controller.js";
+import { listDocumentsController } from "../controller/list-documents.controller.js";
 import { queryDocumentController } from "../controller/query-document.controller.js";
 import { searchInDocumentController } from "../controller/search-in-document.controller.js";
+import { documentIdParamValidation } from "../validations/document-id.validation.js";
 import { queryDocumentValidation } from "../validations/query-document.validation.js";
 import { searchInDocumentValidation } from "../validations/search-in-document.validation.js";
 
@@ -18,6 +23,49 @@ const router = express.Router();
  * @access Protected
  */
 router.post("/documents", authenticateUser, handlePdfUpload, createDocumentController);
+
+/**
+ * @route GET /api/rag/documents
+ * @desc List all uploaded documents for the authenticated user
+ * @access Protected
+ */
+router.get("/documents", authenticateUser, listDocumentsController);
+
+/**
+ * @route GET /api/rag/documents/:documentId
+ * @desc Fetch metadata for a single uploaded document
+ * @access Protected
+ */
+router.get(
+  "/documents/:documentId",
+  authenticateUser,
+  documentIdParamValidation,
+  getDocumentMetaController,
+);
+
+/**
+ * @route DELETE /api/rag/documents/:documentId
+ * @desc Delete an uploaded document and its stored PDF
+ * @access Protected
+ */
+router.delete(
+  "/documents/:documentId",
+  authenticateUser,
+  documentIdParamValidation,
+  deleteDocumentController,
+);
+
+/**
+ * @route GET /api/rag/documents/:documentId/file
+ * @desc Stream the uploaded PDF file for a single document
+ * @access Protected
+ */
+router.get(
+  "/documents/:documentId/file",
+  authenticateUser,
+  documentIdParamValidation,
+  getDocumentFileController,
+);
 
 /**
  * @route GET /api/rag/documents/:documentId/search
