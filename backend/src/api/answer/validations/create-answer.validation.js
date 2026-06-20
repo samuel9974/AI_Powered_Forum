@@ -1,13 +1,8 @@
 import { body } from "express-validator";
 import { validationErrorHandler } from "../../../middleware/validation-handler.js";
 
-
 /**
- * Validation for creating a new answer
- * @param {Object} req - The request object
- * @param {Object} res - The response object
- * @param {Function} next - The next function
- * @returns {void}
+ * Validation for creating a new answer.
  */
 export const createAnswerValidation = [
   body("questionId")
