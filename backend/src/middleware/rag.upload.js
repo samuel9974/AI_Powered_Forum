@@ -16,6 +16,12 @@ const MAX_FILE_SIZE_MB = RAG_MAX_FILE_SIZE_BYTES / (1024 * 1024);
 
 const PDF_MIME_TYPE = "application/pdf";
 
+/**
+ * Determines whether an uploaded file is a PDF by MIME type or file extension.
+ * Assumes that file is not NULL or undefined.
+ * @param file - multer file object with mimetype and originalname
+ * @returns {boolean} - true when the file is a PDF
+ */
 function isPdfFile(file) {
   return (
     file.mimetype === PDF_MIME_TYPE ||
@@ -34,6 +40,14 @@ const uploadPdfFile = multer({
   },
 }).single(RAG_UPLOAD_FIELD_NAME);
 
+/**
+ * Multer middleware wrapper that accepts a single PDF upload on the configured field name.
+ * Assumes that req is not NULL or undefined.
+ * @param req - Express request passed to multer
+ * @param res - Express response passed to multer
+ * @param next - Express next function; receives "Only PDF files are allowed." or "PDF file is required." on invalid or missing uploads
+ * @returns {void}
+ */
 export const handlePdfUpload = (req, res, next) => {
   uploadPdfFile(req, res, (err) => {
     if (err) {
@@ -50,7 +64,9 @@ export const handlePdfUpload = (req, res, next) => {
 
 /**
  * Writes the in-memory upload to disk for long-term storage and processing.
- * @returns {Promise<string|null>} Relative path (e.g. "1/uuid.pdf")
+ * Assumes that req.user.id and req.file.buffer are not NULL or undefined when a file is present.
+ * @param req - Express request with authenticated user and multer file in memory
+ * @returns {Promise<string|null>} - relative storage path such as "1/uuid.pdf", or null when userId or file buffer is missing
  */
 export async function persistMemoryUpload(req) {
   const userId = req.user?.id;
@@ -76,7 +92,13 @@ export async function persistMemoryUpload(req) {
 }
 
 /**
- * Handles multer upload failures (file type, size, missing file).
+ * Handles multer upload failures such as wrong file type, size limit, or missing file.
+ * Assumes that err may be null when no upload error occurred.
+ * @param err - multer or custom upload error, if any
+ * @param req - Express request (unused)
+ * @param res - Express response used to send 400 JSON with msg
+ * @param next - Express next function; called with no args when err is absent
+ * @returns {import('express').Response|void} - 400 JSON with messages such as "File exceeds the 5MB size limit." or err.message
  */
 export const createDocumentMulterErrorHandler = (err, req, res, next) => {
   if (!err) {

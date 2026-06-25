@@ -2,10 +2,11 @@ import { apiClient } from '../core/api.client.js';
 import { handleRagError } from './shared/handle-rag-error.js';
 
 /**
- * GET /api/rag/documents/:documentId/file — PDF blob as a temporary object URL.
+ * GET /api/rag/documents/:documentId/file — fetches the PDF and returns a temporary object URL.
  * Caller must revoke with URL.revokeObjectURL when done.
- * @param {number|string} documentId
- * @returns {Promise<string>}
+ * Assumes that documentId is not NULL or undefined.
+ * @param documentId - numeric ID of the RAG document
+ * @returns {Promise<string>} - blob object URL for the PDF; throws Error from handleRagError on network or backend failure
  */
 export async function fetchPdfObjectUrl(documentId) {
   try {

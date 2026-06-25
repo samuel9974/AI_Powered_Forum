@@ -1,7 +1,10 @@
 import { apiClient } from '../core/api.client.js';
 
 /**
- * Centralized error handler for question service requests.
+ * Normalizes axios failures from question API calls into user-facing Error objects.
+ * Assumes that error is not NULL or undefined.
+ * @param error - axios error, possibly without a response
+ * @returns {Error} - message such as "Request timed out. Please try again.", "Unable to connect to server. Please check your internet connection.", or the backend msg/message field
  */
 function handleQuestionError(error) {
   if (!error.response) {
@@ -20,9 +23,11 @@ function handleQuestionError(error) {
 }
 
 /**
- * Fetches questions with optional keyword search or "mine" filter.
- * @param {{ search?: string, mine?: boolean }} [options]
- * @returns {Promise<Array>}
+ * Fetches questions with optional keyword search or "mine" filter via GET /api/questions.
+ * Assumes that options is not NULL or undefined when provided.
+ * @param search - optional keyword to match against title and content
+ * @param mine - when true, limits results to the authenticated user's questions
+ * @returns {Promise<Array>} - question list from the API; throws Error from handleQuestionError on failure
  */
 async function getQuestions({ search, mine } = {}) {
   try {
@@ -38,10 +43,11 @@ async function getQuestions({ search, mine } = {}) {
 }
 
 /**
- * Semantic (vector) search for questions similar to the query string.
- * @param {string} query
- * @param {{ k?: number, threshold?: number }} [options]
- * @returns {Promise<Array>}
+ * Semantic vector search for questions similar to the query string.
+ * Assumes that query is not NULL or undefined.
+ * @param query - natural-language search text
+ * @param options - optional k (result count) and threshold (similarity cutoff)
+ * @returns {Promise<Array>} - matching questions from GET /api/questions/search; throws Error from handleQuestionError on failure
  */
 async function searchQuestionsSemantic(query, options = {}) {
   try {
@@ -54,9 +60,11 @@ async function searchQuestionsSemantic(query, options = {}) {
 }
 
 /**
- * Creates a new forum question.
- * @param {{ title: string, content: string }} payload
- * @returns {Promise<Object>}
+ * Creates a new forum question via POST /api/questions.
+ * Assumes that title and content are not NULL or undefined.
+ * @param title - question headline
+ * @param content - question body text
+ * @returns {Promise<Object|null>} - created question data; throws Error from handleQuestionError on failure
  */
 async function createQuestion({ title, content }) {
   try {
@@ -68,9 +76,11 @@ async function createQuestion({ title, content }) {
 }
 
 /**
- * AI draft coach tips for a question draft.
- * @param {{ title?: string, content: string }} payload
- * @returns {Promise<{ tips: string[] }>}
+ * Requests AI draft-coach tips for a question draft.
+ * Assumes that content is not NULL or undefined.
+ * @param title - optional question headline
+ * @param content - draft question body used for coaching
+ * @returns {Promise<{tips: string[]}>} - coaching tips from POST /api/questions/draft-coach; throws Error from handleQuestionError on failure
  */
 async function generateQuestionDraftCoach({ title, content }) {
   try {
@@ -85,9 +95,10 @@ async function generateQuestionDraftCoach({ title, content }) {
 }
 
 /**
- * Fetches a single question thread with answers.
- * @param {string} questionHash
- * @returns {Promise<{ question: Object, answers: Array }>}
+ * Fetches a single question thread with its answers.
+ * Assumes that questionHash is not NULL or undefined.
+ * @param questionHash - public hash slug for the question
+ * @returns {Promise<{question: Object, answers: Array}>} - question and answers from GET /api/questions/:questionHash; throws Error from handleQuestionError on failure
  */
 async function getSingleQuestion(questionHash) {
   try {
@@ -102,10 +113,11 @@ async function getSingleQuestion(questionHash) {
 }
 
 /**
- * AI relevance check for an answer draft.
- * @param {string} questionHash
- * @param {string} answerText
- * @returns {Promise<{ level: string, note: string }>}
+ * AI relevance check for an answer draft against a question.
+ * Assumes that questionHash and answerText are not NULL or undefined.
+ * @param questionHash - public hash slug for the question
+ * @param answerText - draft answer body to assess
+ * @returns {Promise<{level: string, note: string}>} - fit level and explanation; throws Error from handleQuestionError on failure
  */
 async function assessAnswerFit(questionHash, answerText) {
   try {
@@ -120,9 +132,10 @@ async function assessAnswerFit(questionHash, answerText) {
 }
 
 /**
- * Similar questions for the related sidebar.
- * @param {string} questionHash
- * @returns {Promise<Array>}
+ * Fetches semantically similar questions for the related sidebar.
+ * Assumes that questionHash is not NULL or undefined.
+ * @param questionHash - public hash slug for the source question
+ * @returns {Promise<Array>} - similar questions from GET /api/questions/:questionHash/similar; throws Error from handleQuestionError on failure
  */
 async function getSimilarQuestions(questionHash) {
   try {

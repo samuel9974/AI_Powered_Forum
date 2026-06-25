@@ -1,8 +1,10 @@
 import { apiClient } from '../core/api.client.js';
 
 /**
- * Registers a new user.
- * @param {Object} userData - User details for registration.
+ * Registers a new user via POST /api/auth/register.
+ * Assumes that userData is not NULL or undefined.
+ * @param userData - registration payload with firstName, lastName, email, and password
+ * @returns {Promise<{user: Object}>} - created user from the API; throws Error from handleAuthError on failure
  */
 async function register(userData) {
   try {
@@ -14,8 +16,10 @@ async function register(userData) {
 }
 
 /**
- * Logs in an existing user and stores their session in localStorage.
- * @param {Object} credentials - User login credentials.
+ * Logs in an existing user and persists the session in localStorage.
+ * Assumes that credentials is not NULL or undefined.
+ * @param credentials - login payload with email and password
+ * @returns {Promise<{user: Object, token: string}>} - authenticated user and JWT; throws Error from handleAuthError on failure
  */
 async function login(credentials) {
   try {
@@ -32,7 +36,8 @@ async function login(credentials) {
 }
 
 /**
- * Logs out the current user by clearing localStorage.
+ * Clears the stored JWT and user object from localStorage.
+ * @returns {void}
  */
 function logout() {
   localStorage.removeItem('token');
@@ -40,14 +45,16 @@ function logout() {
 }
 
 /**
- * Retrieves the stored JWT token from localStorage.
+ * Reads the JWT token from localStorage.
+ * @returns {string|null} - stored token string, or null when not signed in
  */
 function getStoredToken() {
   return localStorage.getItem('token');
 }
 
 /**
- * Retrieves the stored user object from localStorage.
+ * Reads and parses the stored user object from localStorage.
+ * @returns {Object|null} - parsed user object, or null when missing or invalid JSON
  */
 function getStoredUser() {
   const userJson = localStorage.getItem('user');
@@ -63,14 +70,18 @@ function getStoredUser() {
 }
 
 /**
- * Checks if the user is currently authenticated based on local storage.
+ * Returns whether a JWT token is present in localStorage.
+ * @returns {boolean} - true when a token is stored
  */
 function isAuthenticated() {
   return !!getStoredToken();
 }
 
 /**
- * Centralized error handler for auth service requests.
+ * Normalizes axios failures from auth API calls into user-facing Error objects.
+ * Assumes that error is not NULL or undefined.
+ * @param error - axios error, possibly without a response
+ * @returns {Error} - messages such as "Request timed out. Please try again.", "Invalid email or password." (401), or "Invalid input data." (400)
  */
 function handleAuthError(error) {
   if (!error.response) {

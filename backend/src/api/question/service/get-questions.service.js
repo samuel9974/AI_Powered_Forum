@@ -1,5 +1,11 @@
 import { safeExecute } from "../../../../db/db.config.js";
 
+/**
+ * Builds SQL WHERE clause fragments and bound params from optional list filters.
+ * Assumes that filters is not NULL or undefined.
+ * @param filters - optional search string, mine flag, and userId for owner filtering
+ * @returns {{whereClause: string, params: Array}} - SQL WHERE fragment (may be empty) and matching parameter values
+ */
 function buildQuestionFilters(filters) {
   const conditions = [];
   const params = [];
@@ -26,7 +32,10 @@ function buildQuestionFilters(filters) {
 }
 
 /**
- * Retrieves questions with optional search filtering. Max 100 records.
+ * Retrieves up to 100 questions with optional keyword search and "mine" filtering.
+ * Assumes that filters is not NULL or undefined.
+ * @param filters - optional search, mine, and userId filter values
+ * @returns {Promise<{data: Array, meta: {limit: number, total: number, sortBy: string, sortOrder: string}}>} - paginated question list with author and answer counts
  */
 export async function getQuestionsService(filters) {
   const normalizedLimit = 100;

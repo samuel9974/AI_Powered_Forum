@@ -1,7 +1,8 @@
 /**
- * Formats a date into a relative time string (e.g., "5 mins ago", "2 hrs ago")
- * @param {Date|string|number} dateInput - The date to format
- * @returns {string} Relative time string
+ * Formats a date into a relative time string such as "5 mins ago" or "2 hrs ago".
+ * Assumes that dateInput is not NULL or undefined when a non-empty result is expected.
+ * @param dateInput - Date instance, ISO string, or timestamp to format
+ * @returns {string} - relative time label, or empty string when dateInput is missing or invalid
  */
 export function timeAgo(dateInput) {
   if (!dateInput) return '';
@@ -38,10 +39,11 @@ export function timeAgo(dateInput) {
 }
 
 /**
- * Whether a question was created by the signed-in user (IDs compared as strings).
- * @param {{ author?: { id?: string | number } } | null | undefined} question
- * @param {{ id?: string | number } | null | undefined} user
- * @returns {boolean}
+ * Checks whether a question was authored by the signed-in user.
+ * Assumes that question and user are not NULL or undefined when comparing ownership.
+ * @param question - question object with optional author.id
+ * @param user - signed-in user object with id
+ * @returns {boolean} - true when author.id matches user.id as strings
  */
 export function isAuthoredByUser(question, user) {
   if (!question || !user) return false;

@@ -12,6 +12,12 @@ import {
   updateDocumentStatus,
 } from "./shared/document.repository.js";
 
+/**
+ * Reads a PDF from disk and returns per-page plain text content.
+ * Assumes that absolutePath is not NULL or undefined.
+ * @param absolutePath - full filesystem path to the PDF file
+ * @returns {Promise<Array<{pageNumber: number, text: string}>>} - non-empty pages with text; throws BadRequestError with message "No extractable text found in PDF." when parsing yields no text
+ */
 async function extractPagesFromPdf(absolutePath) {
   const buffer = await fs.readFile(absolutePath);
   const parser = new PDFParse({ data: buffer });
@@ -36,7 +42,10 @@ async function extractPagesFromPdf(absolutePath) {
 }
 
 /**
- * Split plain text into chunks (one non-empty line = one chunk).
+ * Split plain text pages into one chunk per non-empty line.
+ * Assumes that pages is not NULL or undefined.
+ * @param pages - array of page objects with pageNumber and text
+ * @returns {Array<{chunkIndex: number, content: string, pageStart: number, pageEnd: number}>} - ordered text chunks ready for embedding
  */
 function chunkText(pages) {
   const chunks = [];
@@ -61,6 +70,13 @@ function chunkText(pages) {
   return chunks;
 }
 
+/**
+ * Persists each text chunk and its Gemini embedding for a document.
+ * Assumes that documentId and chunks are not NULL or undefined.
+ * @param documentId - numeric ID of the parent document
+ * @param chunks - array of chunk objects with content and page metadata
+ * @returns {Promise<void>}
+ */
 async function storeDocumentChunksWithEmbeddings(documentId, chunks) {
   for (const chunk of chunks) {
     const { embedding } = await generateQuestionEmbedding(chunk.content, {
@@ -83,6 +99,13 @@ async function storeDocumentChunksWithEmbeddings(documentId, chunks) {
   }
 }
 
+/**
+ * Parses a PDF, chunks its text, and stores embeddings for RAG retrieval.
+ * Assumes that documentId and filePath are not NULL or undefined.
+ * @param documentId - numeric ID of the document being processed
+ * @param filePath - absolute path to the uploaded PDF on disk
+ * @returns {Promise<void>} - throws BadRequestError with message "No chunkable text found in PDF." when chunking produces no content
+ */
 async function processDocumentContent(documentId, filePath) {
   const pages = await extractPagesFromPdf(filePath);
   const chunks = chunkText(pages);
@@ -94,6 +117,13 @@ async function processDocumentContent(documentId, filePath) {
   await storeDocumentChunksWithEmbeddings(documentId, chunks);
 }
 
+/**
+ * Marks a document as failed, removes partial chunks, and records the error message.
+ * Assumes that documentId and error are not NULL or undefined.
+ * @param documentId - numeric ID of the document to mark failed
+ * @param error - error whose message is stored on the document row
+ * @returns {Promise<void>}
+ */
 async function markDocumentFailed(documentId, error) {
   try {
     await deleteDocumentChunksByDocumentId(documentId);
@@ -112,7 +142,12 @@ async function markDocumentFailed(documentId, error) {
 }
 
 /**
- * Upload, parse, chunk, embed, and persist a PDF document for RAG.
+ * Uploads, parses, chunks, embeds, and persists a PDF document for RAG.
+ * Assumes that userId, file, and storagePath are not NULL or undefined.
+ * @param userId - ID of the authenticated user uploading the document
+ * @param file - multer file object with originalname, mimetype, size, and path
+ * @param storagePath - relative path where the file was persisted on disk
+ * @returns {Promise<Object>} - document response object; throws BadRequestError with "PDF file is required." or "Uploaded file storage path is missing." when inputs are invalid, or Error with "Failed to load document after processing." when the ready row cannot be fetched
  */
 export async function createDocumentFromUploadService({
   userId,

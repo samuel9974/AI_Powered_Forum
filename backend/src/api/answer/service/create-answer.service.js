@@ -4,7 +4,12 @@ import { getSingleAnswerById } from "./shared/answer.repository.js";
 import { getQuestionOwner } from "./shared/question-access.js";
 
 /**
- * Creates an answer for an existing question.
+ * Creates a new answer on an existing question for the authenticated user.
+ * Assumes that questionId, userId, and content are not NULL or undefined.
+ * @param questionId - numeric ID of the question being answered
+ * @param userId - ID of the authenticated user posting the answer
+ * @param content - answer body text
+ * @returns {Promise<{id: number, questionId: number, content: string, createdAt: Date, updatedAt: Date, author: {id: number, firstName: string, lastName: string}}>} - the newly created answer; throws NotFoundError with message "Question not found" if questionId is invalid, or BadRequestError with message "You cannot answer your own question" if the user owns the question
  */
 export async function createAnswerService({ questionId, userId, content }) {
   const question = await getQuestionOwner(questionId);

@@ -7,12 +7,19 @@ import {
   storeQuestionVector,
 } from "./vector.service.js";
 
+/**
+ * Generates a random 16-character hex hash for a new question URL slug.
+ * @returns {string} - unique question hash string
+ */
 function generateQuestionHash() {
   return crypto.randomBytes(8).toString("hex");
 }
 
 /**
- * Creates a new question and stores its vector embedding for semantic search.
+ * Creates a new question, stores its vector embedding, and returns the created record.
+ * Assumes that payload.userId, payload.title, and payload.content are not NULL or undefined.
+ * @param payload - userId, title, and content for the new question
+ * @returns {Promise<{question: {id: number, questionHash: string, title: string, content: string, userId: number}}>} - the created question; throws BadRequestError with message "User does not exist." when userId is invalid
  */
 export async function createQuestionWithVectorService(payload) {
   const { userId, title, content } = payload;

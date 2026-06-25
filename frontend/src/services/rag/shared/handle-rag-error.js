@@ -1,5 +1,8 @@
 /**
- * Normalize axios failures into user-facing Error messages for RAG requests.
+ * Normalizes axios failures from RAG API calls into user-facing Error objects.
+ * Assumes that error is not NULL or undefined.
+ * @param error - axios error, possibly without a response
+ * @returns {Error} - message such as "Request timed out. Please try again.", "Unable to connect to server. Please check your internet connection.", or the backend msg/message field
  */
 export function handleRagError(error) {
   if (!error.response) {

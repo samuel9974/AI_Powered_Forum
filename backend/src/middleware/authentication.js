@@ -7,6 +7,14 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
 }
 
+/**
+ * Verifies the Authorization Bearer JWT and attaches the decoded user to req.user.
+ * Assumes that req.headers.authorization is not NULL or undefined when a token is expected.
+ * @param req - Express request whose Authorization header carries the Bearer token
+ * @param res - Express response (unused on success)
+ * @param next - Express next function; receives UnauthenticatedError with message "Authentication invalid" if the header or token is missing or invalid
+ * @returns {void}
+ */
 export const authenticateUser = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
