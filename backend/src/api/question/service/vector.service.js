@@ -53,7 +53,7 @@ export function normalizeQuestionText({ title }) {
  * @throws {Error} If the embedding response is invalid or the API call fails.
  */
 export async function generateQuestionEmbedding(sourceText, options = {}) {
-  const { taskType = "RETRIEVAL_DOCUMENT" } = options;
+  const { taskType = "RETRIEVAL_QUERY" } = options;
 
   try {
     const response = await genAI.models.embedContent({
@@ -68,9 +68,8 @@ export async function generateQuestionEmbedding(sourceText, options = {}) {
     const values = response.embeddings?.[0]?.values; //[0.434, 0.234, 0.123, ...]
 
     const embeddingLength = response.embeddings?.[0]?.values?.length;
-    console.log(`Length of embedding: ${embeddingLength}`);
 
-    if (!Array.isArray(values) || values.length === 0) {
+    if (!Array.isArray(values) || embeddingLength === 0) {
       throw new Error("Gemini embedding response does not contain values");
     }
 
@@ -79,7 +78,6 @@ export async function generateQuestionEmbedding(sourceText, options = {}) {
     };
   } catch (error) {
     console.error("Error:", error);
-    console.error("==========================");
     throw error;
   }
 }
@@ -285,8 +283,6 @@ export async function findSimilarQuestionsByText({ sourceText, threshold, k }) {
   try {
     rows = await safeExecute(sql, questionIds);
   } catch (error) {
-    console.error("=== DATABASE ERROR FETCHING QUESTION DETAILS ===");
-    console.error("Operation: findSimilarQuestionsByText - fetch details");
     console.error("Question IDs:", questionIds);
     console.error("Error:", error);
     console.error("===============================================");

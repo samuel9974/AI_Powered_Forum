@@ -15,6 +15,7 @@ import MyQuestions from './pages/MyQuestions/MyQuestions';
 import PostQuestion from './pages/PostQuestion/PostQuestion';
 import QuestionDetail from './pages/QuestionDetail/QuestionDetail';
 import RagDocuments from './pages/RagDocuments/RagDocuments';
+import ChatBot from './pages/ChatBot/ChatBot';
 
 function App() {
   return (
@@ -57,6 +58,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RagDocuments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/chatbot'
+              element={
+                <ProtectedRoute>
+                  <ChatBot />
                 </ProtectedRoute>
               }
             />

@@ -21,6 +21,7 @@ export default function Layout() {
     if (path.startsWith('/questions/') && path !== '/questions/ask')
       return 'Discussion';
     if (path === '/rag-documents') return 'Knowledge base';
+    if (path === '/chatbot') return 'Evangadi assistant';
     return 'Forum';
   };
 
@@ -37,6 +38,8 @@ export default function Layout() {
       return 'Read the thread, review related topics, and reply with markdown if you can help.';
     if (path === '/rag-documents')
       return 'Private PDF library: reader, semantic search, and AI answers with citations per document.';
+    if (path === '/chatbot')
+      return 'Ask about Evangadi programs and policies. Answers use the official knowledge base with citations.';
     return '';
   };
 
