@@ -39,16 +39,34 @@ export function timeAgo(dateInput) {
 }
 
 /**
- * Checks whether a question was authored by the signed-in user.
- * Assumes that question and user are not NULL or undefined when comparing ownership.
- * @param question - question object with optional author.id
+ * Minimum answer body length required by the API (create + update validations).
+ * Keep compose and edit forms in sync with backend answer content rules.
+ */
+export const ANSWER_MIN = 20;
+
+/**
+ * Checks whether a resource (question or answer) was authored by the signed-in user.
+ * Client-side only — the API still enforces ownership on mutate routes.
+ * Assumes that resource and user are not NULL or undefined when comparing ownership.
+ * @param resource - object with optional author.id (question or answer shape)
  * @param user - signed-in user object with id
  * @returns {boolean} - true when author.id matches user.id as strings
  */
-export function isAuthoredByUser(question, user) {
-  if (!question || !user) return false;
-  const authorId = question.author?.id;
+export function isAuthoredByUser(resource, user) {
+  if (!resource || !user) return false;
+  const authorId = resource.author?.id;
   const userId = user.id;
   if (authorId == null || userId == null) return false;
   return String(authorId) === String(userId);
+}
+
+/**
+ * Checks whether an answer was authored by the signed-in user.
+ * Thin alias over isAuthoredByUser for clearer call sites on answer cards.
+ * @param answer - answer object with optional author.id
+ * @param user - signed-in user object with id
+ * @returns {boolean} - true when the answer belongs to the signed-in user
+ */
+export function isAnswerAuthoredByUser(answer, user) {
+  return isAuthoredByUser(answer, user);
 }

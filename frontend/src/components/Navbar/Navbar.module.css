@@ -18,10 +18,58 @@
   box-shadow: var(--shadow-sm);
 }
 
-.navbar__titleBlock {
+/* Title + optional hamburger (mobile only). */
+.navbar__leading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   flex-shrink: 1;
   min-width: 0;
   max-width: min(32rem, 46vw);
+}
+
+.navbar__menu {
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: color var(--transition-base), background-color var(--transition-base);
+}
+
+.navbar__menu:hover {
+  color: var(--primary);
+  background-color: var(--primary-light);
+}
+
+.navbar__menu:focus {
+  outline: none;
+}
+
+.navbar__menu:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+
+@media (max-width: 899px) {
+  .navbar__menu {
+    display: inline-flex;
+  }
+
+  .navbar {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+    gap: var(--spacing-md);
+  }
+}
+
+.navbar__titleBlock {
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .navbar__pageTitle {
@@ -49,7 +97,8 @@
 
 .navbar__search {
   flex: 1;
-  max-width: 36rem;
+  max-width: 42rem;
+  min-width: 12rem;
   position: relative;
 }
 
@@ -90,7 +139,7 @@
   gap: 0.25rem;
   padding: 0.375rem 0.75rem;
   background-color: var(--primary);
-  color: var(--text-inverse);
+  color: var(--on-primary);
   border: none;
   border-radius: calc(var(--radius-lg) - 0.25rem);
   font-size: var(--text-xs);
@@ -135,6 +184,73 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+}
+
+/* Hostinger-style Ask AI pill — always available from the shell. */
+.navbar__askAi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.85rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.navbar__askAi:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  background-color: color-mix(in srgb, var(--primary-light) 55%, var(--surface));
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar__askAi--active {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background-color: color-mix(in srgb, var(--primary-light) 70%, var(--surface));
+}
+
+.navbar__askAi:focus {
+  outline: none;
+}
+
+.navbar__askAi:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+
+.navbar__askAiLabel {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .navbar__askAiLabel {
+    display: inline;
+  }
+
+  .navbar__askAi {
+    padding-left: 0.95rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .navbar__askAi {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+  }
 }
 
 .navbar__notification {
@@ -189,23 +305,3 @@
   object-fit: cover;
 }
 
-.navbar__logout {
-  position: relative;
-  padding: 0.5rem;
-  color: var(--text-secondary);
-  transition: var(--transition-base);
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: var(--radius-full);
-}
-
-.navbar__logout:hover {
-  color: var(--error);
-  background-color: var(--error-light);
-}
-
-.navbar__logout:focus {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-}

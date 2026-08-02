@@ -43,13 +43,13 @@
 
 .postQuestion__guide {
   padding: var(--spacing-lg) var(--spacing-xl);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid color-mix(in srgb, var(--info) 20%, transparent);
   border-left: 4px solid var(--primary);
   border-radius: var(--radius-lg);
   background: linear-gradient(
     180deg,
     var(--info-light) 0%,
-    rgba(219, 234, 254, 0.35) 100%
+    color-mix(in srgb, var(--info-light) 35%, transparent) 100%
   );
 }
 
@@ -105,9 +105,9 @@
 .postQuestion__alert {
   padding: 0.75rem 1rem;
   font-size: var(--text-sm);
-  color: #dc2626;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  color: var(--error);
+  background-color: var(--error-light);
+  border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
   border-radius: var(--radius-md);
   line-height: 1.5;
 }
@@ -260,7 +260,7 @@
   font-weight: var(--font-medium);
   color: var(--primary-dark);
   background-color: var(--primary-light);
-  border: 1px solid rgba(249, 115, 22, 0.25);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   border-radius: var(--radius-full);
   transition:
     background-color var(--transition-fast),
@@ -268,8 +268,9 @@
 }
 
 .postQuestion__coachBtn:hover:not(:disabled) {
-  background-color: #ffedd5;
-  border-color: rgba(249, 115, 22, 0.4);
+  background-color: var(--primary-light);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  filter: brightness(0.97);
 }
 
 .postQuestion__coachBtn:focus {
@@ -296,15 +297,15 @@
   font-size: var(--text-xs);
   color: var(--error);
   background-color: var(--error-light);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
   border-radius: var(--radius-md);
 }
 
 .postQuestion__coachPanel {
   padding: var(--spacing-md) var(--spacing-lg);
-  border: 1px solid rgba(249, 115, 22, 0.2);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   border-radius: var(--radius-lg);
-  background-color: #fff7ed;
+  background-color: var(--primary-light);
 }
 
 .postQuestion__coachPanelTitle {

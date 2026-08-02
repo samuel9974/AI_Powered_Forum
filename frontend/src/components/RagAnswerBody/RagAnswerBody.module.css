@@ -1,5 +1,8 @@
 /**
  * Markdown + code blocks for RAG answers (Evangadi tokens).
+ *
+ * Code chrome (`.codeToolbar`, `.pre`, etc.) intentionally stays dark in both
+ * app themes — it mimics an editor/terminal, not the page surface.
  */
 
 .root {

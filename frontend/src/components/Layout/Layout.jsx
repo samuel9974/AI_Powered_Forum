@@ -1,57 +1,57 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { getPageMeta } from '../../config/navConfig';
 import { useAuth } from '../../contexts/AuthContext';
+import { useChatSession } from '../../contexts/ChatSessionContext';
+import { useSidebar } from '../../contexts/SidebarContext';
+import AssistantDrawer from '../AssistantDrawer/AssistantDrawer.jsx';
 import Navbar from '../Navbar/Navbar.jsx';
 import Sidebar from '../Sidebar/Sidebar.jsx';
 import styles from './Layout.module.css';
 
 /**
  * Authenticated shell: fixed sidebar + scrollable main column + footer.
- * Add new `pathname` branches below when you introduce more protected routes.
+ * On narrow viewports the sidebar becomes an off-canvas drawer.
+ * Page titles/subtitles come from `config/navConfig.js` (same source as Sidebar).
+ * Ask AI docks as a persistent right rail and stays open across navigation.
  */
 export default function Layout() {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { mobileOpen, closeMobile } = useSidebar();
+  const { isDrawerOpen } = useChatSession();
+  const { title, subtitle } = getPageMeta(location.pathname);
 
-  /** Navbar title: keep in sync with routes in `App.jsx`. */
-  const getTitle = () => {
-    const path = location.pathname;
-    if (path === '/dashboard') return 'Home';
-    if (path === '/my-questions') return 'Your topics';
-    if (path === '/questions/ask') return 'Ask a question';
-    if (path.startsWith('/questions/') && path !== '/questions/ask')
-      return 'Discussion';
-    if (path === '/rag-documents') return 'Knowledge base';
-    if (path === '/chatbot') return 'Evangadi assistant';
-    return 'Forum';
-  };
-
-  /** One-line context under the title (helps students orient on each screen). */
-  const getSubtitle = () => {
-    const path = location.pathname;
-    if (path === '/dashboard')
-      return 'Browse the feed, search by keyword, or run AI similarity search.';
-    if (path === '/my-questions')
-      return 'Questions you have posted. Open any thread to read replies or edit context.';
-    if (path === '/questions/ask')
-      return 'A clear title and reproducible steps get faster, more accurate answers.';
-    if (path.startsWith('/questions/') && path !== '/questions/ask')
-      return 'Read the thread, review related topics, and reply with markdown if you can help.';
-    if (path === '/rag-documents')
-      return 'Private PDF library: reader, semantic search, and AI answers with citations per document.';
-    if (path === '/chatbot')
-      return 'Ask about Evangadi programs and policies. Answers use the official knowledge base with citations.';
-    return '';
-  };
+  // Close the mobile nav drawer on navigation — not the Ask AI panel.
+  useEffect(() => {
+    closeMobile();
+  }, [location.pathname, closeMobile]);
 
   return (
-    <div className={styles.layout}>
+    <div
+      className={[
+        styles.layout,
+        isDrawerOpen ? styles['layout--assistantOpen'] : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <Sidebar />
+
+      {mobileOpen ? (
+        <button
+          type='button'
+          className={styles.layout__overlay}
+          onClick={closeMobile}
+          aria-label='Close navigation menu'
+        />
+      ) : null}
+
       <div className={styles.layout__content}>
         <Navbar
-          title={getTitle()}
-          subtitle={getSubtitle()}
+          title={title}
+          subtitle={subtitle}
           user={user}
-          onLogout={logout}
         />
         <main className={styles.layout__main}>
           <div className={styles.layout__mainInner}>
@@ -88,6 +88,8 @@ export default function Layout() {
           </div>
         </footer>
       </div>
+
+      <AssistantDrawer />
     </div>
   );
 }

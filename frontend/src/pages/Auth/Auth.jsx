@@ -7,6 +7,7 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles, Code, ArrowRight, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import ThemeToggle from '../../components/ThemeToggle/ThemeToggle';
 import styles from './Auth.module.css';
 
 export default function Auth() {
@@ -225,12 +226,17 @@ export default function Auth() {
               transition={{ duration: 0.2 }}
             >
               <div className={styles.auth__formHeader}>
-                <h2 className={styles.auth__formTitle}>
-                  {isLogin ? 'Sign in to your account' : 'Create an account'}
-                </h2>
-                <p className={styles.auth__formSubtitle}>
-                  {isLogin? 'Enter your email address and password to continue.' : 'Complete the form below to create your account.'}
-                </p>
+                <div className={styles.auth__formHeaderText}>
+                  <h2 className={styles.auth__formTitle}>
+                    {isLogin ? 'Sign in to your account' : 'Create an account'}
+                  </h2>
+                  <p className={styles.auth__formSubtitle}>
+                    {isLogin
+                      ? 'Enter your email address and password to continue.'
+                      : 'Complete the form below to create your account.'}
+                  </p>
+                </div>
+                <ThemeToggle />
               </div>
 
               <form className={styles.auth__form} onSubmit={handleSubmit}>

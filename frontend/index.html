@@ -5,6 +5,35 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI-powered Evangadi Forum</title>
+    <!--
+      FOUC boot: runs before React/CSS modules load so data-theme and data-sidebar
+      are correct on first paint (otherwise the shell renders wide, then animates in).
+      Keys must stay in sync with THEME_STORAGE_KEY (ThemeContext) and
+      SIDEBAR_STORAGE_KEY (SidebarContext).
+    -->
+    <script>
+      (function () {
+        var THEME_KEY = 'forum-theme';
+        var SIDEBAR_KEY = 'forum-sidebar-collapsed';
+        var theme = 'light';
+        var collapsed = false;
+        try {
+          var storedTheme = localStorage.getItem(THEME_KEY);
+          if (storedTheme === 'dark' || storedTheme === 'light') {
+            theme = storedTheme;
+          }
+          collapsed = localStorage.getItem(SIDEBAR_KEY) === 'true';
+        } catch (e) {
+          /* private mode / blocked storage — keep light + expanded */
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.colorScheme = theme;
+        document.documentElement.setAttribute(
+          'data-sidebar',
+          collapsed ? 'collapsed' : 'expanded'
+        );
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

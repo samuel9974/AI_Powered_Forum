@@ -47,15 +47,15 @@
   font-size: var(--text-sm);
   color: var(--error);
   background-color: var(--error-light);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
   border-radius: var(--radius-md);
 }
 
 .ragDocuments__workspace {
   display: grid;
-  grid-template-columns: minmax(16rem, 1fr) minmax(0, 2fr);
+  grid-template-columns: minmax(15rem, 18.5rem) minmax(0, 1fr);
   gap: var(--spacing-lg);
-  align-items: stretch;
+  align-items: start;
 }
 
 @media (max-width: 900px) {
@@ -70,12 +70,23 @@
   border-radius: var(--radius-xl);
   background-color: var(--surface);
   box-shadow: var(--shadow-sm);
+  min-width: 0;
 }
 
 .ragDocuments__library {
   display: flex;
   flex-direction: column;
-  min-height: 24rem;
+  max-height: calc(100vh - 7rem);
+  position: sticky;
+  top: var(--spacing-md);
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .ragDocuments__library {
+    position: static;
+    max-height: none;
+  }
 }
 
 .ragDocuments__libraryHeader {
@@ -274,17 +285,17 @@
 }
 
 .ragDocuments__status--ready {
-  color: #047857;
+  color: var(--success);
   background-color: var(--success-light);
 }
 
 .ragDocuments__status--processing {
-  color: #b45309;
+  color: var(--warning);
   background-color: var(--warning-light);
 }
 
 .ragDocuments__status--failed {
-  color: #b91c1c;
+  color: var(--error);
   background-color: var(--error-light);
 }
 
@@ -325,7 +336,7 @@
 
 .ragDocuments__viewer {
   display: flex;
-  min-height: 24rem;
+  min-height: min(82vh, 56rem);
 }
 
 .ragDocuments__emptySelection {
@@ -337,7 +348,7 @@
   padding: var(--spacing-2xl) var(--spacing-xl);
   text-align: center;
   border-radius: var(--radius-lg);
-  background-color: #eef6ff;
+  background-color: var(--info-light);
 }
 
 .ragDocuments__emptyText {
@@ -373,21 +384,35 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xl);
+  min-width: 0;
   min-height: 0;
   padding: var(--spacing-lg);
-  overflow-y: auto;
 }
 
 .ragDocuments__section {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.ragDocuments__section--reader {
+  gap: var(--spacing-sm);
 }
 
 .ragDocuments__sectionHeader {
   display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-sm) var(--spacing-md);
+}
+
+.ragDocuments__sectionHeaderCopy {
+  display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  min-width: 0;
 }
 
 .ragDocuments__sectionTitle {
@@ -402,6 +427,17 @@
   font-size: var(--text-xs);
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+.ragDocuments__docTitle {
+  margin: 0;
+  max-width: 36rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ragDocuments__sectionForm {
@@ -461,7 +497,7 @@
   font-size: var(--text-sm);
   color: var(--error);
   background-color: var(--error-light);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
   border-radius: var(--radius-md);
 }
 
@@ -475,27 +511,106 @@
 .ragDocuments__readerFrame {
   display: flex;
   flex-direction: column;
-  min-height: 18rem;
+  min-width: 0;
+  min-height: min(78vh, 54rem);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background-color: var(--surface-container-low);
+  background:
+    radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      color-mix(in srgb, var(--primary) 8%, transparent),
+      transparent 70%
+    ),
+    var(--surface-container-low);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 70%, transparent);
   overflow: hidden;
+}
+
+.ragDocuments__readerToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+  background-color: color-mix(in srgb, var(--surface) 88%, var(--surface-container-low));
+}
+
+.ragDocuments__readerToolbarLabel {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.ragDocuments__readerOpenLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--primary-dark);
+  text-decoration: none;
+  background-color: var(--primary-light);
+  border-radius: var(--radius-full);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.ragDocuments__readerOpenLink:hover {
+  background-color: color-mix(in srgb, var(--primary-light) 70%, var(--primary));
+  color: var(--primary-dark);
 }
 
 .ragDocuments__readerLoading {
   margin: 0;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-lg);
   font-size: var(--text-sm);
   color: var(--text-secondary);
+}
+
+.ragDocuments__previewStage {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  min-height: min(72vh, 50rem);
+  padding: var(--spacing-sm);
+  background-color: color-mix(in srgb, var(--text-primary) 4%, var(--surface-container-low));
 }
 
 .ragDocuments__previewFrame {
   flex: 1;
   width: 100%;
-  min-height: 18rem;
-  height: min(50vh, 32rem);
+  min-width: 0;
+  min-height: min(70vh, 48rem);
+  height: min(70vh, 48rem);
   border: none;
-  background-color: var(--surface-container-low);
+  border-radius: var(--radius-md);
+  background-color: #525659;
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 900px) {
+  .ragDocuments__viewer {
+    min-height: 0;
+  }
+
+  .ragDocuments__readerFrame {
+    min-height: min(65vh, 36rem);
+  }
+
+  .ragDocuments__previewStage {
+    min-height: min(58vh, 32rem);
+  }
+
+  .ragDocuments__previewFrame {
+    min-height: min(56vh, 30rem);
+    height: min(56vh, 30rem);
+  }
 }
 
 .ragDocuments__searchResults {

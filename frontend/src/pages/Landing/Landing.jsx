@@ -7,6 +7,7 @@ import { motion as Motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, MessageSquare, Search, PenSquare, Library, ArrowRight, CheckCircle2, Layers, FileText, Database } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import ThemeToggle from '../../components/ThemeToggle/ThemeToggle';
 import styles from './Landing.module.css';
 
 export default function Landing() {
@@ -72,6 +73,7 @@ export default function Landing() {
           </nav>
 
           <div className={styles.landing__headerActions}>
+            <ThemeToggle />
             {isAuthenticated ? (
               <button
                 type='button'

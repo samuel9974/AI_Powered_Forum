@@ -19,7 +19,7 @@ function handleAnswerError(error) {
   const backendMessage =
     error.response.data?.msg || error.response.data?.message;
 
-  return new Error(backendMessage || 'Failed to post answer. Please try again.');
+  return new Error(backendMessage || 'Answer request failed. Please try again.');
 }
 
 /**
@@ -41,6 +41,57 @@ async function postAnswer({ questionId, content }) {
   }
 }
 
+/**
+ * Fetches a single answer via GET /api/answers/:answerId.
+ * Assumes that answerId is not NULL or undefined.
+ * @param answerId - numeric ID of the answer
+ * @returns {Promise<Object|null>} - answer data from the API; throws Error from handleAnswerError on network or backend failure
+ */
+async function getAnswer(answerId) {
+  try {
+    const response = await apiClient.get(`/api/answers/${answerId}`);
+    return response.data.data ?? null;
+  } catch (error) {
+    throw handleAnswerError(error);
+  }
+}
+
+/**
+ * Updates an owned answer via PATCH /api/answers/:answerId.
+ * Assumes that answerId and content are not NULL or undefined.
+ * @param answerId - numeric ID of the answer to update
+ * @param content - updated answer body text
+ * @returns {Promise<Object|null>} - updated answer data from the API; throws Error from handleAnswerError on network or backend failure
+ */
+async function updateAnswer(answerId, { content }) {
+  try {
+    const response = await apiClient.patch(`/api/answers/${answerId}`, {
+      content,
+    });
+    return response.data.data ?? null;
+  } catch (error) {
+    throw handleAnswerError(error);
+  }
+}
+
+/**
+ * Deletes an owned answer via DELETE /api/answers/:answerId.
+ * Assumes that answerId is not NULL or undefined.
+ * @param answerId - numeric ID of the answer to delete
+ * @returns {Promise<{id: number}|null>} - deleted answer id from the API; throws Error from handleAnswerError on network or backend failure
+ */
+async function deleteAnswer(answerId) {
+  try {
+    const response = await apiClient.delete(`/api/answers/${answerId}`);
+    return response.data.data ?? null;
+  } catch (error) {
+    throw handleAnswerError(error);
+  }
+}
+
 export const answerService = {
   postAnswer,
+  getAnswer,
+  updateAnswer,
+  deleteAnswer,
 };

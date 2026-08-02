@@ -7,11 +7,73 @@
     background-color: var(--background);
 }
 
+/*
+ * Offset must track the fixed sidebar exactly, so both read the same resolved
+ * token (`--app-sidebar-current-width`) instead of duplicating a width value.
+ */
 .layout__content {
-    margin-left: var(--app-sidebar-width, 15rem);
+    margin-left: var(--app-sidebar-current-width, 17rem);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition:
+        margin-left var(--transition-slow),
+        margin-right var(--transition-slow);
+}
+
+/* Reserve space for the docked Ask AI rail so page + chat stay usable together. */
+.layout--assistantOpen .layout__content {
+    margin-right: var(--app-assistant-width, 26.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .layout__content {
+        transition: none;
+    }
+}
+
+/*
+ * Mobile shell: full-width content. Sidebar is off-canvas (see Sidebar.module.css).
+ * Breakpoint must match SIDEBAR_MOBILE_QUERY in SidebarContext.
+ * Ask AI goes full-width overlay here — do not shrink the main column.
+ */
+@media (max-width: 899px) {
+    .layout__content {
+        margin-left: 0;
+        transition: none;
+    }
+
+    .layout--assistantOpen .layout__content {
+        margin-right: 0;
+    }
+}
+
+/* Dimmed backdrop behind the open mobile drawer. */
+.layout__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    margin: 0;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    background-color: var(--overlay);
+    animation: layout-overlay-in var(--transition-base) ease-out;
+}
+
+@keyframes layout-overlay-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .layout__overlay {
+        animation: none;
+    }
 }
 
 .layout__main {
@@ -41,7 +103,7 @@
         var(--surface-container-low) 0%,
         var(--surface) 28%
     );
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    box-shadow: inset 0 1px 0 var(--inset-highlight);
     padding-top: var(--spacing-xl);
     padding-bottom: var(--spacing-xl);
 }

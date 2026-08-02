@@ -31,7 +31,7 @@
   background-color: var(--error-light);
   margin: var(--spacing-lg);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;

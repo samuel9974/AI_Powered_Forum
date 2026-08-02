@@ -38,13 +38,24 @@ export default function ActiveDocumentViewer({ document }) {
 
   return (
     <div className={styles.ragDocuments__viewerStack}>
-      <section className={styles.ragDocuments__section} aria-labelledby='rag-reader-heading'>
+      <section
+        className={`${styles.ragDocuments__section} ${styles['ragDocuments__section--reader']}`}
+        aria-labelledby='rag-reader-heading'
+      >
         <header className={styles.ragDocuments__sectionHeader}>
-          <h3 id='rag-reader-heading' className={styles.ragDocuments__sectionTitle}>
-            Reader
-          </h3>
+          <div className={styles.ragDocuments__sectionHeaderCopy}>
+            <h3
+              id='rag-reader-heading'
+              className={styles.ragDocuments__sectionTitle}
+            >
+              Reader
+            </h3>
+            <p className={styles.ragDocuments__docTitle} title={document.title}>
+              {document.title}
+            </p>
+          </div>
           <p className={styles.ragDocuments__sectionHint}>
-            Inline preview of the selected PDF.
+            Full-width preview of the selected PDF.
           </p>
         </header>
         <DocumentPreviewPanel

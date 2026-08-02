@@ -1,4 +1,4 @@
-import { Loader2, Send } from 'lucide-react';
+import { ArrowUp, Loader2 } from 'lucide-react';
 import styles from '../ChatBot.module.css';
 
 /**
@@ -8,6 +8,8 @@ import styles from '../ChatBot.module.css';
  *   onSubmit: (event: React.FormEvent) => void,
  *   isSending: boolean,
  *   disabled: boolean,
+ *   inputId?: string,
+ *   compact?: boolean,
  * }} props
  */
 export default function ChatInputPanel({
@@ -16,40 +18,58 @@ export default function ChatInputPanel({
   onSubmit,
   isSending,
   disabled,
+  inputId = 'chatbot-message',
+  compact = false,
 }) {
+  const canSend = !disabled && !isSending && Boolean(message.trim());
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (canSend) {
+        onSubmit(event);
+      }
+    }
+  }
+
   return (
-    <form className={styles.chatBot__composer} onSubmit={onSubmit}>
-      <label className={styles.chatBot__composerLabel} htmlFor='chatbot-message'>
+    <form
+      className={`${styles.chatBot__composer} ${
+        compact ? styles['chatBot__composer--compact'] : ''
+      }`}
+      onSubmit={onSubmit}
+    >
+      <label className={styles.chatBot__srOnly} htmlFor={inputId}>
         Your message
       </label>
-      <textarea
-        id='chatbot-message'
-        className={styles.chatBot__composerInput}
-        value={message}
-        onChange={event => onMessageChange(event.target.value)}
-        placeholder='Ask about Evangadi programs, admissions, or campus info…'
-        rows={3}
-        disabled={disabled || isSending}
-      />
-      <div className={styles.chatBot__composerActions}>
+      <div className={styles.chatBot__composerShell}>
+        <textarea
+          id={inputId}
+          className={styles.chatBot__composerInput}
+          value={message}
+          onChange={event => onMessageChange(event.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder='Ask anything about Evangadi…'
+          rows={compact ? 1 : 2}
+          disabled={disabled || isSending}
+        />
         <button
           type='submit'
           className={styles.chatBot__sendBtn}
-          disabled={disabled || isSending || !message.trim()}
+          disabled={!canSend}
+          aria-label={isSending ? 'Sending message' : 'Send message'}
+          title={isSending ? 'Sending…' : 'Send'}
         >
           {isSending ? (
-            <>
-              <Loader2 size={16} className={styles.chatBot__spin} aria-hidden />
-              Sending…
-            </>
+            <Loader2 size={18} className={styles.chatBot__spin} aria-hidden />
           ) : (
-            <>
-              <Send size={16} strokeWidth={2} aria-hidden />
-              Send
-            </>
+            <ArrowUp size={18} strokeWidth={2.25} aria-hidden />
           )}
         </button>
       </div>
+      <p className={styles.chatBot__composerHint}>
+        Enter to send · Shift+Enter for a new line
+      </p>
     </form>
   );
 }

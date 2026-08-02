@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bot, Library, MessageSquare, PenSquare } from 'lucide-react';
+import { Library, MessageSquare, PenSquare } from 'lucide-react';
 import QuestionCard from '../../components/QuestionCard/QuestionCard.jsx';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAuthoredByUser } from '../../lib/utils.js';
@@ -25,12 +25,6 @@ const QUICK_ACTIONS = [
     title: 'Your topics',
     description: 'Filtered list of threads you authored.',
     path: '/my-questions',
-  },
-  {
-    icon: Bot,
-    title: 'Evangadi assistant',
-    description: 'Chat about programs, admissions, and campus info with citations.',
-    path: '/chatbot',
   },
   {
     icon: Library,

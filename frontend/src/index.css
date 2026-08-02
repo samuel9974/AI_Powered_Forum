@@ -58,6 +58,15 @@
   --info: #3b82f6;
   --info-light: #dbeafe;
 
+  /* Text on brand / solid accent fills (always light for contrast). */
+  --on-primary: #ffffff;
+
+  /* Modal scrim — retuned per theme. */
+  --overlay: rgba(15, 23, 42, 0.45);
+
+  /* Soft top edge on raised cards. */
+  --inset-highlight: rgba(255, 255, 255, 0.75);
+
   /* Background colors */
   --background: #f8fafc;
   --background-secondary: #f1f5f9;
@@ -116,12 +125,105 @@
 
   /* App shell: sidebar width and shared horizontal rhythm. */
   --app-sidebar-width: 17rem;
+  /* Icon-rail width when the desktop sidebar is collapsed. */
+  --app-sidebar-collapsed-width: 4.5rem;
+  /* Docked Ask AI panel (Hostinger-style persistent assistant). */
+  --app-assistant-width: 26.5rem;
+  /*
+   * Resolved shell width: the ONLY value Sidebar and Layout should read.
+   * Flipped by `[data-sidebar='collapsed']` (set by SidebarProvider on <html>),
+   * which keeps the fixed sidebar and the content offset mathematically in sync.
+   */
+  --app-sidebar-current-width: var(--app-sidebar-width);
   /* Primary content column (Layout main + footer + marketing sections aligned to app). */
   --app-content-max: 80rem;
   /* Marketing / explainer columns (auth info panel, success messages). */
   --app-prose-max: 32rem;
   /* Narrow forms (auth sign-in card). */
   --app-form-max: 28rem;
+
+  /* Native form controls / scrollbars follow the light palette. */
+  color-scheme: light;
+}
+
+/**
+ * Collapsed shell (icon rail). SidebarProvider sets `data-sidebar` on <html>,
+ * so a single token swap resizes the sidebar and the main column together.
+ */
+[data-sidebar='collapsed'] {
+  --app-sidebar-current-width: var(--app-sidebar-collapsed-width);
+}
+
+/**
+ * Dark theme: same token names, different values.
+ * Components that use var(--surface), var(--text-primary), etc. flip automatically
+ * when <html data-theme="dark"> is set (ThemeProvider + FOUC boot script).
+ * Spacing, radius, type, and layout tokens stay inherited from :root.
+ */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Primary — keep brand orange; retune “light” tints for dark surfaces */
+  --primary: #fb923c; /* Orange-400 — slightly brighter on dark bg */
+  --primary-hover: #fdba74; /* Orange-300 */
+  --primary-light: #431407; /* Orange-950 — soft orange wash */
+  --primary-dark: #ea580c; /* Orange-600 */
+  --primary-container: #c2410c; /* Orange-700 */
+
+  /* Secondary */
+  --secondary: #94a3b8; /* Slate-400 */
+  --secondary-hover: #cbd5e1; /* Slate-300 */
+
+  /* Tertiary — used for strong dark chrome (e.g. code panels) */
+  --tertiary: #020617; /* Slate-950 */
+  --tertiary-container: #0f172a; /* Slate-900 */
+
+  /* Surfaces — elevate from page background */
+  --surface: #1e293b; /* Slate-800 */
+  --surface-hover: #334155; /* Slate-700 */
+  --surface-container-low: #0f172a; /* Slate-900 */
+  --surface-container-high: #334155; /* Slate-700 */
+  --surface-container-highest: #475569; /* Slate-600 */
+
+  /* Text */
+  --text-primary: #f8fafc; /* Slate-50 */
+  --text-secondary: #cbd5e1; /* Slate-300 */
+  --text-tertiary: #94a3b8; /* Slate-400 */
+  --text-placeholder: #64748b; /* Slate-500 */
+  --text-inverse: #ffffff; /* text on solid dark/brand fills */
+
+  /* Borders */
+  --border: #334155; /* Slate-700 */
+  --border-hover: #475569; /* Slate-600 */
+  --border-focus: #fb923c; /* match --primary */
+
+  /* Status — solid hues stay vivid; *-light become dark tinted panels */
+  --success: #34d399; /* Emerald-400 */
+  --success-light: #064e3b; /* Emerald-900 */
+  --warning: #fbbf24; /* Amber-400 */
+  --warning-light: #78350f; /* Amber-900 */
+  --error: #f87171; /* Red-400 */
+  --error-light: #7f1d1d; /* Red-900 */
+  --info: #60a5fa; /* Blue-400 */
+  --info-light: #1e3a8a; /* Blue-900 */
+
+  --on-primary: #ffffff;
+  --overlay: rgba(2, 6, 23, 0.65);
+  --inset-highlight: rgba(255, 255, 255, 0.06);
+
+  /* Page backgrounds — darker than --surface so cards read as raised */
+  --background: #0f172a; /* Slate-900 */
+  --background-secondary: #020617; /* Slate-950 */
+
+  /* Shadows — softer black so elevation doesn’t look muddy */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.4),
+    0 2px 4px -2px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 12px 20px -4px rgba(0, 0, 0, 0.45),
+    0 4px 8px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 28px -6px rgba(0, 0, 0, 0.5),
+    0 10px 12px -6px rgba(0, 0, 0, 0.35);
+  --shadow-focus: 0 0 0 3px rgba(251, 146, 60, 0.35);
 }
 
 /* Global Resets */
@@ -144,6 +246,15 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }
 
 a {

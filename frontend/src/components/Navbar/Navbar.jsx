@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, LogOut, Sparkles } from 'lucide-react';
+import { Search, Sparkles, Menu, X } from 'lucide-react';
+import { useChatSession } from '../../contexts/ChatSessionContext';
+import {
+  SIDEBAR_PANEL_ID,
+  useSidebar,
+} from '../../contexts/SidebarContext';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import styles from './Navbar.module.css';
 
 /**
  * Top bar: page title, debounced text search → `/dashboard?q=…`, optional AI semantic search.
  * Search state is driven by the URL on the dashboard so bookmarks and refresh keep context.
+ * On narrow viewports, a hamburger opens the off-canvas nav drawer (Step 5).
+ * “Ask AI” opens the global assistant drawer without leaving the current page.
  */
-export default function Navbar({ title, subtitle, user, onLogout }) {
+export default function Navbar({ title, subtitle, user }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { mobileOpen, toggleMobileOpen } = useSidebar();
+  const { toggleDrawer, isDrawerOpen } = useChatSession();
 
   // Initialize searchTerm from URL if we are already on the dashboard
   const [searchTerm, setSearchTerm] = useState(() => {
@@ -57,13 +67,33 @@ export default function Navbar({ title, subtitle, user, onLogout }) {
     }
   };
 
+  const menuLabel = mobileOpen ? 'Close navigation menu' : 'Open navigation menu';
+
   return (
     <header className={styles.navbar}>
-      <div className={styles.navbar__titleBlock}>
-        <h2 className={styles.navbar__pageTitle}>{title}</h2>
-        {subtitle ? (
-          <p className={styles.navbar__pageSubtitle}>{subtitle}</p>
-        ) : null}
+      <div className={styles.navbar__leading}>
+        <button
+          type='button'
+          className={styles.navbar__menu}
+          onClick={toggleMobileOpen}
+          aria-label={menuLabel}
+          title={menuLabel}
+          aria-expanded={mobileOpen}
+          aria-controls={SIDEBAR_PANEL_ID}
+        >
+          {mobileOpen ? (
+            <X size={22} aria-hidden />
+          ) : (
+            <Menu size={22} aria-hidden />
+          )}
+        </button>
+
+        <div className={styles.navbar__titleBlock}>
+          <h2 className={styles.navbar__pageTitle}>{title}</h2>
+          {subtitle ? (
+            <p className={styles.navbar__pageSubtitle}>{subtitle}</p>
+          ) : null}
+        </div>
       </div>
 
       <form className={styles.navbar__search} onSubmit={handleSearchSubmit}>
@@ -93,6 +123,20 @@ export default function Navbar({ title, subtitle, user, onLogout }) {
       </form>
 
       <div className={styles.navbar__actions}>
+        <button
+          type='button'
+          className={`${styles.navbar__askAi}${
+            isDrawerOpen ? ` ${styles['navbar__askAi--active']}` : ''
+          }`}
+          onClick={toggleDrawer}
+          aria-label={isDrawerOpen ? 'Close AI assistant' : 'Ask AI assistant'}
+          title='Ask AI'
+          aria-expanded={isDrawerOpen}
+        >
+          <Sparkles size={16} strokeWidth={2} aria-hidden />
+          <span className={styles.navbar__askAiLabel}>Ask AI</span>
+        </button>
+        <ThemeToggle />
         <div className={styles.navbar__user}>
           <span className={styles['navbar__user-name']}>
             {user ? `${user.firstName} ${user.lastName}` : 'Guest'}
@@ -110,17 +154,6 @@ export default function Navbar({ title, subtitle, user, onLogout }) {
             />
           </div>
         </div>
-        {user && (
-          <button
-            type='button'
-            className={styles.navbar__logout}
-            onClick={onLogout}
-            aria-label='Logout'
-            title='Logout'
-          >
-            <LogOut size={20} />
-          </button>
-        )}
       </div>
     </header>
   );
