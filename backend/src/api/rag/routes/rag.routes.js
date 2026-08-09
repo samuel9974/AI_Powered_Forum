@@ -10,6 +10,7 @@ import { getDocumentFileController } from "../controller/get-document-file.contr
 import { getDocumentMetaController } from "../controller/get-document-meta.controller.js";
 import { listDocumentsController } from "../controller/list-documents.controller.js";
 import { queryDocumentController } from "../controller/query-document.controller.js";
+import { reprocessDocumentController } from "../controller/reprocess-document.controller.js";
 import { searchInDocumentController } from "../controller/search-in-document.controller.js";
 import { documentIdParamValidation } from "../validations/document-id.validation.js";
 import { queryDocumentValidation } from "../validations/query-document.validation.js";
@@ -41,6 +42,18 @@ router.get(
   authenticateUser,
   documentIdParamValidation,
   getDocumentMetaController,
+);
+
+/**
+ * @route POST /api/rag/documents/:documentId/reprocess
+ * @desc Re-chunk and re-embed an existing PDF with the current ingest pipeline
+ * @access Protected
+ */
+router.post(
+  "/documents/:documentId/reprocess",
+  authenticateUser,
+  documentIdParamValidation,
+  reprocessDocumentController,
 );
 
 /**

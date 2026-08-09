@@ -19,5 +19,11 @@ export const queryDocumentValidation = [
     .withMessage("query must be a string")
     .trim(),
 
+  body("k")
+    .optional()
+    .isInt({ min: 1, max: 20 })
+    .withMessage("k must be between 1 and 20")
+    .toInt(),
+
   validationErrorHandler,
 ];

@@ -10,6 +10,7 @@ export const queryDocumentController = async (req, res, next) => {
       userId: req.user.id,
       documentId: req.params.documentId,
       query: req.body.query,
+      k: req.body.k,
     });
 
     res.status(StatusCodes.OK).json({

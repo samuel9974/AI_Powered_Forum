@@ -7,5 +7,7 @@ export function mapSearchResultFromApi(result) {
     chunkIndex: result.chunkIndex ?? result.chunk_index,
     score: Number(result.score ?? 0),
     excerpt: result.excerpt ?? '',
+    pageStart: result.pageStart ?? result.page_start ?? null,
+    pageEnd: result.pageEnd ?? result.page_end ?? null,
   };
 }

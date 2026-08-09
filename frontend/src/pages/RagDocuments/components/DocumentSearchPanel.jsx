@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
 import { searchInDocument } from '../../../services/rag/search-in-document.js';
+import { formatPageRange } from '../../../services/rag/shared/format-page-range.js';
 import styles from '../RagDocuments.module.css';
 
 export default function DocumentSearchPanel({ documentId }) {
@@ -48,7 +49,8 @@ export default function DocumentSearchPanel({ documentId }) {
           Semantic search
         </h3>
         <p className={styles.ragDocuments__sectionHint}>
-          Finds passages by meaning (embeddings), not only exact keywords.
+          Finds passages by meaning (embeddings), not only exact keywords. Each
+          hit shows similarity score and page when available.
         </p>
       </header>
 
@@ -98,23 +100,28 @@ export default function DocumentSearchPanel({ documentId }) {
 
       {!isSearching && results.length > 0 ? (
         <ul className={styles.ragDocuments__searchResults}>
-          {results.map(result => (
-            <li key={result.chunkId ?? `${result.chunkIndex}-${result.score}`}>
-              <article className={styles.ragDocuments__searchResult}>
-                <header className={styles.ragDocuments__searchResultHeader}>
-                  <span className={styles.ragDocuments__searchResultChunk}>
-                    Chunk {result.chunkIndex}
-                  </span>
-                  <span className={styles.ragDocuments__searchResultScore}>
-                    Score {result.score.toFixed(2)}
-                  </span>
-                </header>
-                <p className={styles.ragDocuments__searchResultExcerpt}>
-                  {result.excerpt}
-                </p>
-              </article>
-            </li>
-          ))}
+          {results.map(result => {
+            const pageLabel = formatPageRange(result);
+            return (
+              <li key={result.chunkId ?? `${result.chunkIndex}-${result.score}`}>
+                <article className={styles.ragDocuments__searchResult}>
+                  <header className={styles.ragDocuments__searchResultHeader}>
+                    <span className={styles.ragDocuments__searchResultChunk}>
+                      {pageLabel
+                        ? `${pageLabel} · chunk ${result.chunkIndex}`
+                        : `Chunk ${result.chunkIndex}`}
+                    </span>
+                    <span className={styles.ragDocuments__searchResultScore}>
+                      Score {Number(result.score).toFixed(2)}
+                    </span>
+                  </header>
+                  <p className={styles.ragDocuments__searchResultExcerpt}>
+                    {result.excerpt}
+                  </p>
+                </article>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
     </section>

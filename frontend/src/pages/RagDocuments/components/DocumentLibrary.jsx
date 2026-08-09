@@ -12,18 +12,21 @@ export default function DocumentLibrary({
   isUploading,
   uploadError,
   deletingDocumentId,
+  reprocessingDocumentId,
   onChooseFileClick,
   onFileChange,
   onUploadClick,
   onSelectDocument,
   onDeleteDocument,
+  onReprocessDocument,
 }) {
   return (
     <aside className={styles.ragDocuments__library} aria-label='Document library'>
       <header className={styles.ragDocuments__libraryHeader}>
         <h2 className={styles.ragDocuments__libraryTitle}>Library</h2>
         <p className={styles.ragDocuments__libraryHint}>
-          Add PDFs here. Processing runs once per upload.
+          Add PDFs here. Use reprocess to re-index an existing file after pipeline
+          improvements.
         </p>
       </header>
 
@@ -103,7 +106,9 @@ export default function DocumentLibrary({
                 isActive={activeDocument?.documentId === document.documentId}
                 onSelect={onSelectDocument}
                 onDelete={onDeleteDocument}
+                onReprocess={onReprocessDocument}
                 isDeleting={deletingDocumentId === document.documentId}
+                isReprocessing={reprocessingDocumentId === document.documentId}
               />
             ))}
           </ul>

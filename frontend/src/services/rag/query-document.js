@@ -7,13 +7,19 @@ import { mapCitationFromApi } from './shared/map-citation.js';
  * POST /api/rag/documents/:documentId/query — grounded AI answer for one document.
  * @param {number|string} documentId
  * @param {string} query
- * @returns {Promise<{ answer: string, citations: Array, chunksUsed: number[] }>}
+ * @param {{ k?: number }} [options]
+ * @returns {Promise<{ answer: string, citations: Array, chunksUsed: number[], intent: string }>}
  */
-export async function queryDocument(documentId, query) {
+export async function queryDocument(documentId, query, options = {}) {
   try {
+    const body = { query: query.trim() };
+    if (Number.isFinite(Number(options.k)) && Number(options.k) > 0) {
+      body.k = Number(options.k);
+    }
+
     const response = await apiClient.post(
       `/api/rag/documents/${documentId}/query`,
-      { query: query.trim() },
+      body,
       { timeout: RAG_LONG_REQUEST_TIMEOUT_MS },
     );
 
@@ -25,6 +31,7 @@ export async function queryDocument(documentId, query) {
       answer: data.answer ?? '',
       citations: citations.map(mapCitationFromApi),
       chunksUsed,
+      intent: data.intent === 'overview' ? 'overview' : 'factual',
     };
   } catch (error) {
     throw handleRagError(error);

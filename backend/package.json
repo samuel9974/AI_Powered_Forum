@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "rag:diagnose": "node scripts/rag-baseline-diagnostics.js",
+    "rag:reprocess": "node scripts/rag-reprocess-document.js",
+    "rag:validate": "node scripts/rag-validation-matrix.js"
   },
   "keywords": [],
   "author": "",

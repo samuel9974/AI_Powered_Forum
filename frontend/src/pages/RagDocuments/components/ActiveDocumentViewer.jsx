@@ -13,7 +13,9 @@ export default function ActiveDocumentViewer({ document }) {
               This document is not ready for preview or AI tools.{' '}
               {document.errorMessage
                 ? document.errorMessage
-                : 'Processing failed. Delete it and upload again.'}
+                : 'Processing failed.'}{' '}
+              Use the refresh (reprocess) action in the library to rebuild the
+              index, or delete and upload again.
             </>
           ) : (
             <>

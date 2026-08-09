@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { deleteDocument } from '../../services/rag/delete-document.js';
 import { getDocumentMeta } from '../../services/rag/get-document-meta.js';
 import { listDocuments } from '../../services/rag/list-documents.js';
+import { reprocessDocument } from '../../services/rag/reprocess-document.js';
 import { uploadPdf } from '../../services/rag/upload-document.js';
 import ActiveDocumentViewer from './components/ActiveDocumentViewer.jsx';
 import DocumentLibrary from './components/DocumentLibrary.jsx';
@@ -23,6 +24,7 @@ export default function RagDocuments() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [deletingDocumentId, setDeletingDocumentId] = useState(null);
+  const [reprocessingDocumentId, setReprocessingDocumentId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,6 +180,50 @@ export default function RagDocuments() {
     }
   }
 
+  async function handleReprocessDocument(document) {
+    const confirmed = window.confirm(
+      `Reprocess "${document.title}"? This rebuilds chunks and embeddings with the current pipeline (the PDF file stays).`,
+    );
+    if (!confirmed) return;
+
+    setReprocessingDocumentId(document.documentId);
+
+    // Optimistically show processing while the request runs.
+    const processingDoc = { ...document, status: 'processing', errorMessage: null };
+    setDocuments(prev => mergeDocumentUpdate(prev, processingDoc));
+    setActiveDocument(prev =>
+      prev?.documentId === document.documentId ? processingDoc : prev,
+    );
+
+    try {
+      const updated = await reprocessDocument(document.documentId);
+      setDocuments(prev => mergeDocumentUpdate(prev, updated));
+      setActiveDocument(prev =>
+        prev?.documentId === updated.documentId ? updated : prev,
+      );
+
+      if (updated.status === 'failed') {
+        window.alert(
+          updated.errorMessage ||
+            'Reprocessing finished with a failed status. Check the document error.',
+        );
+      }
+    } catch (err) {
+      window.alert(err.message || 'Could not reprocess document.');
+      try {
+        const latest = await getDocumentMeta(document.documentId);
+        setDocuments(prev => mergeDocumentUpdate(prev, latest));
+        setActiveDocument(prev =>
+          prev?.documentId === latest.documentId ? latest : prev,
+        );
+      } catch {
+        // Keep optimistic processing state; poll effect may recover.
+      }
+    } finally {
+      setReprocessingDocumentId(null);
+    }
+  }
+
   return (
     <div className={styles.ragDocuments}>
       <section
@@ -214,11 +260,13 @@ export default function RagDocuments() {
           isUploading={isUploading}
           uploadError={uploadError}
           deletingDocumentId={deletingDocumentId}
+          reprocessingDocumentId={reprocessingDocumentId}
           onChooseFileClick={handleChooseFileClick}
           onFileChange={handleFileChange}
           onUploadClick={handleUploadClick}
           onSelectDocument={handleSelectDocument}
           onDeleteDocument={handleDeleteDocument}
+          onReprocessDocument={handleReprocessDocument}
         />
 
         <section

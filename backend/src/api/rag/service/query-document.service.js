@@ -1,6 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 import { ServiceUnavailableError } from "../../../utils/errors/index.js";
 import { searchInDocumentService } from "./search-in-document.service.js";
+import {
+  buildRagAnswerPrompt,
+  getRagAnswerMaxOutputTokens,
+} from "./shared/build-rag-answer-prompt.js";
+import { classifyRagQueryIntent } from "./shared/classify-rag-query-intent.js";
+import { classifyRagFailureMode } from "./shared/rag-chunk-stats.js";
+import { logRagDiagnostic } from "./shared/rag-diagnostics.js";
+import {
+  getRagRetrievalConfig,
+  normalizeRagTopK,
+} from "./shared/rag-retrieval-config.js";
 
 const GEMINI_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash-lite";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -34,24 +45,47 @@ function parseJsonObjectFromGeminiText(raw) {
 }
 
 /**
+ * Format page range for context / citation labels.
+ * @param {{ pageStart?: number|null, pageEnd?: number|null }} chunk
+ * @returns {string|null}
+ */
+function formatPageLabel(chunk) {
+  const start = Number(chunk?.pageStart);
+  const end = Number(chunk?.pageEnd);
+
+  if (!Number.isInteger(start) || start < 1) {
+    return null;
+  }
+
+  if (Number.isInteger(end) && end > start) {
+    return `pages ${start}-${end}`;
+  }
+
+  return `page ${start}`;
+}
+
+/**
  * Build numbered context blocks for the RAG generation prompt.
- * @param {Array<{ chunkIndex: number, excerpt: string }>} chunks
+ * @param {Array<{ chunkIndex: number, excerpt: string, pageStart?: number|null, pageEnd?: number|null }>} chunks
  * @returns {string}
  */
 function buildRagContextBlock(chunks) {
   return chunks
-    .map(
-      (chunk, index) =>
-        `[${index + 1}] (chunkIndex: ${chunk.chunkIndex})\n${chunk.excerpt}`,
-    )
+    .map((chunk, index) => {
+      const pageLabel = formatPageLabel(chunk);
+      const meta = pageLabel
+        ? `(chunkIndex: ${chunk.chunkIndex}, ${pageLabel})`
+        : `(chunkIndex: ${chunk.chunkIndex})`;
+      return `[${index + 1}] ${meta}\n${chunk.excerpt}`;
+    })
     .join("\n\n");
 }
 
 /**
  * Map cited reference numbers from the model to citation objects.
  * @param {Array<number>} citedRefs
- * @param {Array<{ chunkIndex: number }>} chunks
- * @returns {Array<{ ref: number, chunkIndex: number }>}
+ * @param {Array<{ chunkIndex: number, pageStart?: number|null, pageEnd?: number|null }>} chunks
+ * @returns {Array<{ ref: number, chunkIndex: number, pageStart: number|null, pageEnd: number|null }>}
  */
 function mapCitedRefsToCitations(citedRefs, chunks) {
   if (!Array.isArray(citedRefs)) {
@@ -67,9 +101,12 @@ function mapCitedRefsToCitations(citedRefs, chunks) {
       continue;
     }
 
+    const chunk = chunks[refNumber - 1];
     citations.push({
       ref: refNumber,
-      chunkIndex: chunks[refNumber - 1].chunkIndex,
+      chunkIndex: chunk.chunkIndex,
+      pageStart: chunk.pageStart ?? null,
+      pageEnd: chunk.pageEnd ?? null,
     });
   }
 
@@ -81,10 +118,11 @@ function mapCitedRefsToCitations(citedRefs, chunks) {
  *
  * @param {Object} params
  * @param {string} params.userQuery - The user's natural-language question
- * @param {Array<{ chunkId: number, chunkIndex: number, excerpt: string }>} params.chunks - Top-ranked chunks from semantic search
- * @returns {Promise<{ answer: string, citations: Array<{ ref: number, chunkIndex: number }> }>}
+ * @param {Array<{ chunkId: number, chunkIndex: number, excerpt: string, pageStart?: number|null, pageEnd?: number|null }>} params.chunks - Top-ranked chunks from semantic search
+ * @param {'overview'|'factual'} [params.intent='factual']
+ * @returns {Promise<{ answer: string, citations: Array<{ ref: number, chunkIndex: number, pageStart: number|null, pageEnd: number|null }> }>}
  */
-async function answerFromRagChunks({ userQuery, chunks }) {
+async function answerFromRagChunks({ userQuery, chunks, intent = "factual" }) {
   if (!chunks.length) {
     return {
       answer:
@@ -94,32 +132,19 @@ async function answerFromRagChunks({ userQuery, chunks }) {
   }
 
   const contextBlock = buildRagContextBlock(chunks);
-
-  const userPrompt = `You answer questions using ONLY the context excerpts below from a single document.
-If the excerpts do not contain enough information, say you cannot answer from the document.
-
-CONTEXT:
-${contextBlock}
-
-QUESTION:
-${userQuery}
-
-Reply with ONLY valid JSON (no markdown fences), exactly this shape:
-{
-  "answer": "your answer in plain language",
-  "citedRefs": [1]
-}
-
-Rules:
-- answer: concise, grounded only in the CONTEXT above; do not invent facts.
-- citedRefs: array of reference numbers (e.g. 1, 2) for excerpts you used; use [] if none apply.`;
+  const userPrompt = buildRagAnswerPrompt({
+    userQuery,
+    contextBlock,
+    intent,
+  });
+  const maxOutputTokens = getRagAnswerMaxOutputTokens(intent);
 
   try {
     const response = await genAI.models.generateContent({
       model: GEMINI_TEXT_MODEL,
       contents: userPrompt,
       config: {
-        maxOutputTokens: 1024,
+        maxOutputTokens,
       },
     });
 
@@ -138,6 +163,8 @@ Rules:
       citations = chunks.map((chunk, index) => ({
         ref: index + 1,
         chunkIndex: chunk.chunkIndex,
+        pageStart: chunk.pageStart ?? null,
+        pageEnd: chunk.pageEnd ?? null,
       }));
     }
 
@@ -146,6 +173,7 @@ Rules:
     console.error("=== GEMINI API ERROR DURING RAG ANSWER GENERATION ===");
     console.error("Operation: queryDocumentService");
     console.error("User query:", userQuery);
+    console.error("Intent:", intent);
     console.error("Chunk count:", chunks.length);
     console.error("Error:", error);
     console.error("=====================================================");
@@ -157,31 +185,59 @@ Rules:
 
 /**
  * Answer a user question grounded in a single RAG document.
- * Reuses semantic search for retrieval, then generates an answer from the top chunks.
+ * Classifies overview vs factual intent, retrieves accordingly, then generates an answer.
  *
  * @param {Object} params
  * @param {number} params.userId
  * @param {number} params.documentId
  * @param {string} params.query
- * @returns {Promise<{ answer: string, citations: Array<{ ref: number, chunkIndex: number }>, chunksUsed: number[] }>}
+ * @param {number} [params.k] - optional top-k override
+ * @returns {Promise<{ answer: string, citations: Array<{ ref: number, chunkIndex: number, pageStart: number|null, pageEnd: number|null }>, chunksUsed: number[], intent: string }>}
  */
-export async function queryDocumentService({ userId, documentId, query }) {
+export async function queryDocumentService({ userId, documentId, query, k }) {
+  const config = getRagRetrievalConfig();
+  const intent = classifyRagQueryIntent(query);
+  const retrievalMode = intent === "overview" ? "overview" : "similarity";
+  const defaultK =
+    intent === "overview" ? config.overviewTopK : config.topK;
+  const normalizedK = normalizeRagTopK(k, defaultK);
+
   const searchResult = await searchInDocumentService({
     userId,
     documentId,
     query,
+    k: normalizedK,
+    retrievalMode,
   });
 
   const { answer, citations } = await answerFromRagChunks({
     userQuery: query,
     chunks: searchResult.results,
+    intent,
   });
 
   const chunksUsed = searchResult.results.map((result) => result.chunkId);
+
+  logRagDiagnostic("query", {
+    documentId,
+    query,
+    intent,
+    retrievalMode,
+    k: normalizedK,
+    maxOutputTokens: getRagAnswerMaxOutputTokens(intent),
+    hitsReturned: searchResult.results.length,
+    failureMode: classifyRagFailureMode({
+      hitsAboveThreshold: searchResult.results.length,
+      answer,
+    }),
+    answerPreview:
+      answer.length > 160 ? `${answer.slice(0, 157)}...` : answer,
+  });
 
   return {
     answer,
     citations,
     chunksUsed,
+    intent,
   };
 }

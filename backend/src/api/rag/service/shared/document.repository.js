@@ -248,7 +248,7 @@ export async function insertDocumentChunkVector({ chunkId, sourceText, embedding
  * Loads ready chunk vectors for a document, skipping rows with invalid embeddings.
  * Assumes that documentId is not NULL or undefined.
  * @param documentId - numeric ID of the document
- * @returns {Promise<Array<{chunkId: number, chunkIndex: number, content: string, embedding: Array<number>}>>} - parsed chunk vectors ordered by chunk_index
+ * @returns {Promise<Array<{chunkId: number, chunkIndex: number, content: string, pageStart: number|null, pageEnd: number|null, embedding: Array<number>}>>} - parsed chunk vectors ordered by chunk_index
  */
 export async function fetchReadyChunkVectorsByDocumentId(documentId) {
   const sql = `
@@ -256,6 +256,8 @@ export async function fetchReadyChunkVectorsByDocumentId(documentId) {
       dc.chunk_id,
       dc.chunk_index,
       dc.content,
+      dc.page_start,
+      dc.page_end,
       dcv.embedding
     FROM document_chunks dc
     INNER JOIN document_chunk_vectors dcv ON dcv.chunk_id = dc.chunk_id
@@ -289,6 +291,8 @@ export async function fetchReadyChunkVectorsByDocumentId(documentId) {
         chunkId: row.chunk_id,
         chunkIndex: row.chunk_index,
         content: row.content,
+        pageStart: row.page_start == null ? null : Number(row.page_start),
+        pageEnd: row.page_end == null ? null : Number(row.page_end),
         embedding,
       });
     } catch (parseError) {

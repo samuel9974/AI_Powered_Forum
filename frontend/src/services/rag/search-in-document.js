@@ -7,7 +7,7 @@ import { mapSearchResultFromApi } from './shared/map-search-result.js';
  * @param {number|string} documentId
  * @param {string} query
  * @param {{ k?: number }} [options]
- * @returns {Promise<{ query: string, results: Array }>}
+ * @returns {Promise<{ query: string, results: Array, retrievalMode: string }>}
  */
 export async function searchInDocument(documentId, query, options = {}) {
   try {
@@ -27,6 +27,7 @@ export async function searchInDocument(documentId, query, options = {}) {
     return {
       query: data.query ?? query.trim(),
       results: results.map(mapSearchResultFromApi),
+      retrievalMode: data.retrievalMode ?? 'similarity',
     };
   } catch (error) {
     throw handleRagError(error);
