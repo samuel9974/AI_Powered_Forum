@@ -54,6 +54,7 @@
 - **Semantic search** — Gemini embeddings + cosine similarity across all question vectors
 
 ### 🤖 AI-Powered Helpers
+
 | Feature | Endpoint | What it does |
 |---------|----------|--------------|
 | **Draft Coach** | `POST /api/questions/draft-coach` | 3–5 actionable tips to improve a question draft |
@@ -61,16 +62,24 @@
 | **Similar Questions** | `GET /api/questions/:hash/similar` | Surfaces related threads on the detail page |
 
 ### 📚 Knowledge Base (RAG)
-- Upload personal PDFs (max 5 MB) — parsed, chunked, and embedded
-- Semantic search within a single document
+- Upload personal PDFs — parsed, chunked, and embedded with page-aware chunks
+- **Intent-aware retrieval** — overview questions use broader coverage; factual questions stay precise
+- Semantic search within a single document (ranked excerpts + page ranges)
 - AI Q&A grounded in retrieved chunks with numbered citations
-- In-browser PDF preview and per-user document library
+- **Reprocess** — re-chunk and re-embed an existing PDF with the current ingest pipeline
+- In-browser PDF preview, processing status polling, and per-user document library
 
 ### 🗣️ Evangadi Assistant (Chatbot)
-- Chat interface backed by the official **Evangadi Networks Knowledge Base**
-- Retrieval-augmented responses with conversation history (up to 20 turns)
-- Citation-backed answers — no open-web guessing
+- Persistent **Ask AI** drawer that stays open across in-app navigation
+- Full-page chat at `/chatbot` when preferred
+- Retrieval-augmented responses with conversation history
+- Citation-backed answers from the official Evangadi knowledge base
 - One-time knowledge-base ingestion via `POST /api/chatbot/ingest`
+
+### 🎨 Experience & Shell
+- Collapsible sidebar (full labels ↔ icon rail)
+- Light / dark theme with persistent preference
+- Shared design tokens across marketing and authenticated pages
 
 ---
 
@@ -86,6 +95,7 @@ flowchart TB
         PostQ["Ask Question"]
         QDetail["Question Detail"]
         RAG["Knowledge Base"]
+        Drawer["Ask AI Drawer"]
         Chat["Evangadi Assistant"]
         Auth["Auth Pages"]
     end
@@ -105,8 +115,8 @@ flowchart TB
     end
 
     subgraph AI["🧠 Google Gemini"]
-        Embed["Embedding Models\ngemini-embedding-001"]
-        Gen["Generation Models\ngemini-2.5-flash-lite"]
+        Embed["Embedding Models"]
+        Gen["Generation Models"]
     end
 
     Client -->|REST + JWT| API
@@ -130,8 +140,8 @@ sequenceDiagram
     U->>FE: Enter semantic search query
     FE->>BE: GET /api/questions/search?query=...
     BE->>G: Embed query text
-    G-->>BE: 768-dim vector
-    BE->>DB: Load all question_vectors (status=ready)
+    G-->>BE: Embedding vector
+    BE->>DB: Load question_vectors (status=ready)
     BE->>BE: Cosine similarity + threshold filter
     BE-->>FE: Top-k ranked questions
     FE-->>U: Display similar threads
@@ -141,18 +151,21 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A["📄 Upload PDF"] --> B["Parse & Chunk\n(pdf-parse)"]
-    B --> C["Embed Chunks\n(Gemini)"]
-    C --> D[("Store in MySQL\ndocuments + chunks + vectors")]
-    D --> E["🔍 Semantic Search\nwithin document"]
-    D --> F["💬 RAG Q&A\nretrieve → generate → cite"]
-    E --> G["Ranked snippets"]
-    F --> H["Grounded answer + citations"]
+    A["📄 Upload PDF"] --> B["Parse pages\n(pdf-parse)"]
+    B --> C["Chunk + page ranges"]
+    C --> D["Embed chunks\n(Gemini, concurrent)"]
+    D --> E[("MySQL\ndocuments + chunks + vectors")]
+    E --> F{"Query intent"}
+    F -->|factual| G["Similarity top-k"]
+    F -->|overview| H["Broader top-k +\nearly-page seeds"]
+    G --> I["💬 Generate + cite"]
+    H --> I
+    E --> J["🔁 Reprocess\nre-chunk + re-embed"]
 ```
 
 ### Backend Pattern
 
-```
+```text
 routes → controller → service → repository / SQL
          ↑
     express-validator (input validation)
@@ -164,6 +177,7 @@ routes → controller → service → repository / SQL
 ## 🛠 Tech Stack
 
 ### Frontend
+
 | Technology | Purpose |
 |------------|---------|
 | **React 19** | UI framework |
@@ -177,6 +191,7 @@ routes → controller → service → repository / SQL
 | **Vitest** | Unit testing (configured) |
 
 ### Backend
+
 | Technology | Purpose |
 |------------|---------|
 | **Express 5** | REST API server |
@@ -189,12 +204,13 @@ routes → controller → service → repository / SQL
 | **@google/genai** | Gemini embeddings & text generation |
 
 ### AI / ML
+
 | Model | Used For |
 |-------|----------|
-| `gemini-embedding-001` | Question & document chunk embeddings (768-dim) |
-| `text-embedding-004` | Chatbot knowledge-base embeddings |
+| `gemini-embedding-001` | Question & document chunk embeddings |
+| `text-embedding-004` | Chatbot knowledge-base embeddings (default fallback) |
 | `gemini-2.5-flash-lite` | Draft coach, answer fit, RAG Q&A |
-| `gemini-2.0-flash-lite` | Chatbot conversation generation |
+| Configurable generation model | Chatbot conversation (`GEMINI_GENERATION_MODEL` / `GEMINI_TEXT_MODEL`) |
 
 > Vectors are stored as MySQL `JSON` columns. Similarity is computed in Node.js via cosine similarity — no dedicated vector database required.
 
@@ -202,7 +218,7 @@ routes → controller → service → repository / SQL
 
 ## 📁 Project Structure
 
-```
+```text
 AI_Powered_Forum/
 │
 ├── 📂 backend/
@@ -211,13 +227,14 @@ AI_Powered_Forum/
 │   │   ├── db.config.js                  # MySQL pool + safeExecute()
 │   │   └── schema.sql                    # Database DDL
 │   ├── rag-uploads/                      # User PDF storage (per-user dirs)
+│   ├── scripts/                          # RAG diagnose / reprocess / validate
 │   └── src/
 │       ├── api/
 │       │   ├── routes.js                 # Route aggregator
 │       │   ├── auth/                     # Register & login
 │       │   ├── question/                 # CRUD + semantic search + AI coach
 │       │   ├── answer/                   # CRUD answers
-│       │   ├── rag/                      # PDF upload, search, RAG Q&A
+│       │   ├── rag/                      # PDF upload, search, RAG Q&A, reprocess
 │       │   └── chatbot/                  # KB ingest + chat assistant
 │       ├── middleware/                   # Auth, validation, error handling, upload
 │       └── utils/errors/                 # Typed HTTP error classes
@@ -225,11 +242,12 @@ AI_Powered_Forum/
 ├── 📂 frontend/
 │   └── src/
 │       ├── App.jsx                       # Route map
-│       ├── contexts/AuthContext.jsx      # Global auth state
-│       ├── components/                   # Layout, Sidebar, Navbar, cards…
+│       ├── config/navConfig.js           # Sidebar + page chrome metadata
+│       ├── contexts/                     # Auth, theme, sidebar, chat session
+│       ├── components/                   # Layout, Sidebar, Navbar, Ask AI drawer…
 │       ├── pages/                        # Landing, Dashboard, ChatBot, RAG…
 │       ├── services/                     # Axios API clients per domain
-│       ├── index.css                     # Global design tokens
+│       ├── index.css                     # Global design tokens (light + dark)
 │       └── styles/pageStates.module.css  # Shared loading/empty states
 │
 └── README.md
@@ -246,7 +264,9 @@ AI_Powered_Forum/
 | `/questions/:hash` | Thread detail + similar topics | Protected |
 | `/my-questions` | Your authored topics | Protected |
 | `/rag-documents` | Knowledge base (PDF RAG) | Protected |
-| `/chatbot` | Evangadi Assistant | Protected |
+| `/chatbot` | Evangadi Assistant (full page) | Protected |
+
+> The **Ask AI** control opens a persistent drawer from the app shell; it shares session state with `/chatbot`.
 
 ---
 
@@ -302,17 +322,25 @@ GEMINI_API_KEY=<your-gemini-api-key>
 GEMINI_EMBEDDING_MODEL=gemini-embedding-001
 GEMINI_TEXT_MODEL=gemini-2.5-flash-lite
 
+# Forum semantic recommendations
 RECOMMEND_THRESHOLD=0.75
 RECOMMEND_K=5
+
+# RAG retrieval (optional overrides)
+# RAG_TOP_K=12
+# RAG_SIMILARITY_THRESHOLD=0.6
+# RAG_OVERVIEW_TOP_K=16
+# RAG_EMBEDDING_CONCURRENCY=3
+# RAG_DIAGNOSTICS=true
 ```
 
 **`frontend/.env`** (create locally; do not commit)
 
 ```env
-VITE_API_BASE_URL=http://localhost:<backend-port>
+VITE_API_BASE_URL=http://localhost:5000
 ```
 
-> ⚠️ **Port alignment:** The backend defaults to port `5000`, but the frontend API client falls back to `5001`. Set `VITE_API_BASE_URL` explicitly to match your backend `PORT`.
+> ⚠️ Set `VITE_API_BASE_URL` to match your backend `PORT`. If unset, the frontend client falls back to the configured production API host.
 
 ### 4. Install dependencies & run
 
@@ -397,6 +425,7 @@ Base URL (local development): `http://localhost:<backend-port>/api`
 | `POST` | `/documents` | ✅ | Upload PDF (`multipart/form-data`) |
 | `GET` | `/documents` | ✅ | List user's documents |
 | `GET` | `/documents/:id` | ✅ | Document metadata |
+| `POST` | `/documents/:id/reprocess` | ✅ | Re-chunk and re-embed with current pipeline |
 | `DELETE` | `/documents/:id` | ✅ | Delete document + file + chunks |
 | `GET` | `/documents/:id/file` | ✅ | Stream PDF file |
 | `GET` | `/documents/:id/search` | ✅ | Semantic search within document |
@@ -412,7 +441,7 @@ Base URL (local development): `http://localhost:<backend-port>/api`
 
 **Authentication header for protected routes:**
 
-```
+```http
 Authorization: Bearer <jwt-token>
 ```
 
@@ -494,12 +523,12 @@ erDiagram
 
 ## 🎨 Design System
 
-The UI follows a **clean, modern aesthetic** — generous whitespace, a restrained slate palette, and a vibrant orange accent. CSS custom properties in `frontend/src/index.css` keep the entire app visually consistent.
+The UI follows a **clean, modern aesthetic** — generous whitespace, a restrained slate palette, and a vibrant orange accent. CSS custom properties in `frontend/src/index.css` keep the entire app visually consistent across light and dark themes.
 
 ### Color Palette
 
-| Token | Value | Usage |
-|-------|-------|-------|
+| Token | Light value | Usage |
+|-------|-------------|-------|
 | `--primary` | `#f97316` 🟠 | CTAs, focus rings, active navigation |
 | `--text-primary` | `#0f172a` | Headings and body text |
 | `--background` | `#f8fafc` | Page background |
@@ -508,34 +537,42 @@ The UI follows a **clean, modern aesthetic** — generous whitespace, a restrain
 | `--error` | `#ef4444` 🔴 | Error states |
 | `--info` | `#3b82f6` 🔵 | Informational badges |
 
+Dark mode reuses the same token names under `[data-theme="dark"]`, so components flip automatically without per-page theme forks.
+
 ### Layout
 
-```
-┌──────────────────────────────────────────────────────┐
-│  Sidebar (17rem)  │  Navbar (title + subtitle)       │
-│  ───────────────  │  ──────────────────────────────  │
-│  🏠 Home          │                                  │
-│  💬 Your Topics   │  Main Content Area               │
-│  🤖 Assistant     │  (max-width: 80rem)              │
-│  📄 Knowledge     │                                  │
-│                   │                                  │
-│  [New Question]   │  Footer                          │
-│  👤 User / Logout │                                  │
-└──────────────────────────────────────────────────────┘
+```text
+┌────────────────────────────────────────────────────────────────┐
+│  Sidebar (17rem / 4.5rem) │  Navbar + Theme + Ask AI           │
+│  ───────────────────────  │  ────────────────────────────────  │
+│  🏠 Home                  │                                    │
+│  💬 Your Topics           │  Main Content Area                 │
+│  📄 Knowledge Base        │  (max-width: 80rem)                │
+│                           │                                    │
+│  [New Question]           │           │ Ask AI drawer (opt.)   │
+│  👤 User / Logout         │           │                        │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 - **Font:** Inter (with system-ui / `-apple-system` fallback)
 - **Icons:** Lucide React
 - **Animations:** Framer Motion on the landing hero
 - **Styling:** CSS Modules per component — no utility-class framework
+- **Shell state:** `ThemeProvider`, `SidebarProvider`, and `ChatSessionProvider` keep chrome in sync
 
 ---
 
-## 🧪 Testing & Linting
+## 🧪 Testing, Diagnostics & Linting
 
 ```bash
 # Backend — Node.js built-in test runner
 cd backend && npm test
+
+# Optional RAG operator scripts
+cd backend
+npm run rag:diagnose
+npm run rag:reprocess
+npm run rag:validate
 
 # Frontend — Vitest + Testing Library
 cd frontend && npm test          # single run
@@ -563,16 +600,17 @@ npm start            # node index.js (no hot reload)
 | Concern | Recommendation |
 |---------|----------------|
 | PDF storage | Mount a persistent volume for `backend/rag-uploads/` |
-| CORS | Restrict origins in production (currently open) |
+| CORS | Restrict origins in production (currently open for local development) |
 | Secrets | Use environment variables — never commit `.env` files |
 | Chatbot KB | Run `/api/chatbot/ingest` after each knowledge-base update |
 | Gemini API | Monitor rate limits and costs in Google AI Studio |
+| Frontend API URL | Set `VITE_API_BASE_URL` explicitly for each environment |
 
 ---
 
 ## 🔒 Security
 
-This README documents **local development only**. Before publishing or deploying publicly, review the following:
+This README documents **local development** and general production hygiene. Before publishing or deploying publicly, review the following:
 
 | Area | Guidance |
 |------|----------|
@@ -591,13 +629,13 @@ If you fork this repository, rotate any credentials you used during development 
 
 ## 🗺 Roadmap & Known Limitations
 
-- [ ] Add `chatbot_chunks` table to `schema.sql` (currently manual SQL step)
+- [ ] Add `chatbot_chunks` table to `schema.sql` (currently a manual SQL step)
 - [ ] Create `.env.example` files for both packages
-- [ ] Align default ports (backend `5000` vs frontend fallback `5001`)
-- [ ] Add Vitest setup file (`src/test/setup.js`) and initial test suites
+- [ ] Expand Vitest coverage and shared test setup
 - [ ] Docker / CI pipeline for automated builds
 - [ ] Auto-ingest chatbot KB on server startup (optional flag)
 - [ ] Instructor/cohort-level shared document corpora
+- [ ] Harden chatbot ingest authorization for multi-tenant production
 
 ---
 
@@ -612,6 +650,7 @@ If you fork this repository, rotate any credentials you used during development 
 Please follow the existing code patterns:
 - Backend: `routes → controller → service` with `express-validator`
 - Frontend: domain services in `src/services/`, CSS Modules for styling
+- Keep shell chrome in sync via `config/navConfig.js` when adding protected pages
 - Match naming conventions and keep diffs focused
 
 ---
