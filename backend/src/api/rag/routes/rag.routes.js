@@ -25,6 +25,8 @@ const router = express.Router();
  */
 router.post("/documents", authenticateUser, handlePdfUpload, createDocumentController);
 
+router.use(createDocumentMulterErrorHandler);
+
 /**
  * @route GET /api/rag/documents
  * @desc List all uploaded documents for the authenticated user
@@ -103,7 +105,5 @@ router.post(
   queryDocumentValidation,
   queryDocumentController,
 );
-
-router.use(createDocumentMulterErrorHandler);
 
 export default router;

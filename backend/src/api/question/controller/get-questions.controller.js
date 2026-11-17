@@ -6,9 +6,11 @@ import { getQuestionsService } from "../service/get-questions.service.js";
  */
 export const getQuestionsController = async (req, res, next) => {
   try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
+    const mineValue = req.query.mine;
     const filters = {
-      search: req.query.search,
-      mine: req.query.mine,
+      search,
+      mine: mineValue === true || mineValue === 'true' || mineValue === '1',
       userId: req.user.id,
     };
 

@@ -7,6 +7,7 @@ import {
   useSidebar,
 } from '../../contexts/SidebarContext';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
+import { userInitials } from '../../lib/utils';
 import styles from './Navbar.module.css';
 
 /**
@@ -38,20 +39,35 @@ export default function Navbar({ title, user }) {
   }, [location.search, location.pathname]);
 
   // Debounced keyword search: updates `?q=` on the dashboard (500ms quiet period).
+  // Leave `?semantic=` alone when the box still matches that AI query, including
+  // a shared link and a click on AI Search before this timer fires.
   useEffect(() => {
+    if (location.pathname !== '/dashboard') {
+      return undefined;
+    }
+
     const delayDebounceFn = setTimeout(() => {
-      if (searchTerm.trim() !== '') {
-        navigate(`/dashboard?q=${encodeURIComponent(searchTerm)}`);
-      } else if (
-        location.pathname === '/dashboard' &&
-        !new URLSearchParams(location.search).get('semantic')
-      ) {
-        navigate('/dashboard');
+      const params = new URLSearchParams(location.search);
+      const term = searchTerm.trim();
+      const semantic = params.get('semantic')?.trim() ?? '';
+      const keyword = params.get('q')?.trim() ?? '';
+
+      if (!term) {
+        if (keyword || semantic) {
+          navigate('/dashboard', { replace: true });
+        }
+        return;
       }
+
+      if (semantic === term || (keyword === term && !semantic)) {
+        return;
+      }
+
+      navigate(`/dashboard?q=${encodeURIComponent(term)}`);
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, navigate, location.pathname]);
+  }, [searchTerm, navigate, location.pathname, location.search]);
 
   const handleSemanticSearch = e => {
     e.preventDefault();
@@ -138,17 +154,8 @@ export default function Navbar({ title, user }) {
           <span className={styles['navbar__user-name']}>
             {user ? `${user.firstName} ${user.lastName}` : 'Guest'}
           </span>
-          <div className={styles['navbar__user-avatar']}>
-            <img
-              src={
-                user?.avatar ||
-                `https://ui-avatars.com/api/?name=${
-                  user?.firstName || 'User'
-                }+${user?.lastName || ''}&background=random`
-              }
-              alt='avatar'
-              referrerPolicy='no-referrer'
-            />
+          <div className={styles['navbar__user-avatar']} aria-hidden>
+            {userInitials(user)}
           </div>
         </div>
       </div>

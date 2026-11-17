@@ -64,12 +64,20 @@ export default function Auth() {
         setError('First name must be at least 3 characters long.');
         return;
       }
+      if (trimmedFirstName.length > 50) {
+        setError('First name must be at most 50 characters long.');
+        return;
+      }
       if (!trimmedLastName) {
         setError('Last name is required.');
         return;
       }
       if (trimmedLastName.length < 3) {
         setError('Last name must be at least 3 characters long.');
+        return;
+      }
+      if (trimmedLastName.length > 50) {
+        setError('Last name must be at most 50 characters long.');
         return;
       }
       if (password.length < 6) {
@@ -252,6 +260,7 @@ export default function Auth() {
                         placeholder='First name'
                         className={styles.auth__input}
                         value={firstName}
+                        maxLength={50}
                         onChange={e => setFirstName(e.target.value)}
                       />
                     </div>
@@ -266,6 +275,7 @@ export default function Auth() {
                         placeholder='Last name'
                         className={styles.auth__input}
                         value={lastName}
+                        maxLength={50}
                         onChange={e => setLastName(e.target.value)}
                       />
                     </div>

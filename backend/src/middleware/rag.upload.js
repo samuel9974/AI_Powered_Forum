@@ -93,16 +93,20 @@ export async function persistMemoryUpload(req) {
 
 /**
  * Handles multer upload failures such as wrong file type, size limit, or missing file.
- * Assumes that err may be null when no upload error occurred.
+ * Errors that already carry an HTTP status (auth, not found, validation) are passed on.
  * @param err - multer or custom upload error, if any
  * @param req - Express request (unused)
  * @param res - Express response used to send 400 JSON with msg
- * @param next - Express next function; called with no args when err is absent
+ * @param next - Express next function; receives err when it is not an upload failure
  * @returns {import('express').Response|void} - 400 JSON with messages such as "File exceeds the 5MB size limit." or err.message
  */
 export const createDocumentMulterErrorHandler = (err, req, res, next) => {
   if (!err) {
     return next();
+  }
+
+  if (err.statusCode) {
+    return next(err);
   }
 
   if (err instanceof multer.MulterError) {

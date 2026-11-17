@@ -479,18 +479,6 @@ export default function Landing() {
             >
               Sign in
             </button>
-            <span className={styles.landing__footerDot} aria-hidden>
-              ·
-            </span>
-            <a href='#' className={styles.landing__footerLinkAnchor}>
-              Privacy
-            </a>
-            <span className={styles.landing__footerDot} aria-hidden>
-              ·
-            </span>
-            <a href='#' className={styles.landing__footerLinkAnchor}>
-              Terms
-            </a>
           </div>
         </div>
       </footer>

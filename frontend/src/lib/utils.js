@@ -70,3 +70,14 @@ export function isAuthoredByUser(resource, user) {
 export function isAnswerAuthoredByUser(answer, user) {
   return isAuthoredByUser(answer, user);
 }
+
+/**
+ * Two-letter mark drawn locally so the user's name is not sent to an avatar host.
+ * @param {{ firstName?: string, lastName?: string } | null | undefined} user
+ * @returns {string}
+ */
+export function userInitials(user) {
+  const first = user?.firstName?.trim()?.[0] ?? '';
+  const last = user?.lastName?.trim()?.[0] ?? '';
+  return (first + last).toUpperCase() || '?';
+}

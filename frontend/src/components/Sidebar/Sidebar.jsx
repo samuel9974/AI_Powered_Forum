@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { ASK_QUESTION_PATH, NAV_ITEMS } from '../../config/navConfig';
 import { useAuth } from '../../contexts/AuthContext';
+import { userInitials } from '../../lib/utils';
 import {
   SIDEBAR_PANEL_ID,
   useSidebar,
@@ -184,18 +185,8 @@ export default function Sidebar() {
             title={displayName}
             data-tooltip={displayName}
           >
-            <div className={styles.sidebar__avatar}>
-              <img
-                src={
-                  user?.avatar ||
-                  `https://ui-avatars.com/api/?name=${
-                    user?.firstName || 'User'
-                  }+${user?.lastName || ''}&background=random`
-                }
-                alt={displayName}
-                className={styles['sidebar__avatar-image']}
-                referrerPolicy='no-referrer'
-              />
+            <div className={styles.sidebar__avatar} aria-hidden>
+              {userInitials(user)}
             </div>
             <div className={styles.sidebar__info} aria-hidden={iconRail}>
               <p className={styles.sidebar__name}>

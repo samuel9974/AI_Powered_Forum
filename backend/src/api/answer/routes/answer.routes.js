@@ -20,9 +20,9 @@ router.post("/", authenticateUser, createAnswerValidation, createAnswerControlle
 /**
  * @route GET /api/answers/:answerId
  * @desc Get one answer
- * @access Public
+ * @access Protected
  */
-router.get('/:answerId', answerIdValidation, getSingleAnswerController);
+router.get('/:answerId', authenticateUser, answerIdValidation, getSingleAnswerController);
 
 /**
  * @route PATCH /api/answers/:answerId

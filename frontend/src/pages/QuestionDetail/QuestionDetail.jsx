@@ -812,7 +812,7 @@ export default function QuestionDetail() {
           {isOwnQuestion ? (
             <div className={styles.questionDetail__ownNote}>
               You authored this thread. You cannot post an answer to your own
-              question, but you can edit context or wait for peers to reply.
+              question. Wait for a peer to reply.
             </div>
           ) : (
             <section

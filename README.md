@@ -414,7 +414,7 @@ Base URL (local development): `http://localhost:<backend-port>/api`
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `POST` | `/` | ✅ | Post an answer |
-| `GET` | `/:answerId` | — | Fetch a single answer |
+| `GET` | `/:answerId` | ✅ | Fetch a single answer |
 | `PATCH` | `/:answerId` | ✅ | Update own answer |
 | `DELETE` | `/:answerId` | ✅ | Delete own answer |
 

@@ -67,20 +67,6 @@ export default function Layout() {
                 © 2026 Evangadi Forum. For educational use.
               </p>
             </div>
-            <nav className={styles['layout__footer-nav']}>
-              <a href='#' className={styles['layout__footer-link']}>
-                About
-              </a>
-              <a href='#' className={styles['layout__footer-link']}>
-                Privacy
-              </a>
-              <a href='#' className={styles['layout__footer-link']}>
-                Terms
-              </a>
-              <a href='#' className={styles['layout__footer-link']}>
-                Contact
-              </a>
-            </nav>
           </div>
         </footer>
       </div>
