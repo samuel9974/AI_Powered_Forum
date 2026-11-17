@@ -10,7 +10,7 @@ import { mainRouter } from "./src/api/routes.js";
 const app = express();
 const port = process.env.PORT || 5000;
 
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,https://samuelwbaneh.com,https://www.samuelwbaneh.com')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
