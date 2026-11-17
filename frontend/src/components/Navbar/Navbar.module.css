@@ -18,14 +18,13 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Title + optional hamburger (mobile only). */
+/* Title + optional hamburger (mobile only). Compact — no subtitle in the bar. */
 .navbar__leading {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  flex-shrink: 1;
+  flex: 0 0 auto;
   min-width: 0;
-  max-width: min(32rem, 46vw);
 }
 
 .navbar__menu {
@@ -63,7 +62,12 @@
   .navbar {
     padding-left: var(--spacing-md);
     padding-right: var(--spacing-md);
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+
+  /* Page already shows its own heading — free the bar for search. */
+  .navbar__titleBlock {
+    display: none;
   }
 }
 
@@ -78,28 +82,22 @@
   color: var(--text-primary);
   line-height: 1.25;
   margin: 0;
-}
-
-.navbar__pageSubtitle {
-  margin: 0.125rem 0 0;
-  font-size: var(--text-xs);
-  font-weight: var(--font-normal);
-  color: var(--text-tertiary);
-  line-height: 1.4;
-  display: none;
-}
-
-@media (min-width: 900px) {
-  .navbar__pageSubtitle {
-    display: block;
-  }
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .navbar__search {
-  flex: 1;
-  max-width: 42rem;
-  min-width: 12rem;
+  flex: 1 1 auto;
+  max-width: 40rem;
+  min-width: 0;
   position: relative;
+}
+
+@media (min-width: 900px) {
+  .navbar__search {
+    min-width: 20rem;
+  }
 }
 
 .navbar__search-icon {
@@ -123,10 +121,21 @@
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   padding-left: 2.5rem;
-  padding-right: 7rem;
+  padding-right: 0.75rem;
   font-size: var(--text-sm);
   transition: var(--transition-base);
   color: var(--text-primary);
+}
+
+/* Reserve room only when the AI Search control is visible. */
+.navbar__search:has(.navbar__semantic-button) .navbar__search-input {
+  padding-right: 7rem;
+}
+
+@media (max-width: 639px) {
+  .navbar__search:has(.navbar__semantic-button) .navbar__search-input {
+    padding-right: 2.75rem;
+  }
 }
 
 .navbar__semantic-button {
@@ -184,6 +193,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 /* Hostinger-style Ask AI pill — always available from the shell. */

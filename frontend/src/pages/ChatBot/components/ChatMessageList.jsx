@@ -35,7 +35,6 @@ export default function ChatMessageList({
         <p className={styles.chatBot__emptyTitle}>How can I help?</p>
         <p className={styles.chatBot__emptyHint}>
           Ask about Evangadi programs, admissions, schedules, or campus life.
-          Answers cite the official knowledge base when available.
         </p>
         <ul className={styles.chatBot__suggestions}>
           {SUGGESTIONS.map(suggestion => (
@@ -86,23 +85,6 @@ export default function ChatMessageList({
                 <p className={styles.chatBot__messageText}>{message.content}</p>
               )}
             </div>
-            {message.role === 'assistant' &&
-            Array.isArray(message.citations) &&
-            message.citations.length > 0 ? (
-              <div className={styles.chatBot__citations}>
-                <p className={styles.chatBot__citationsTitle}>Sources</p>
-                <ul className={styles.chatBot__citationsList}>
-                  {message.citations.map(citation => (
-                    <li
-                      key={`${message.id}-${citation.ref}-${citation.chunkIndex}`}
-                    >
-                      [{citation.ref}]{' '}
-                      {citation.excerpt || `Chunk ${citation.chunkIndex}`}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
           </div>
         </li>
       ))}

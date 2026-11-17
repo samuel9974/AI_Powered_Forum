@@ -15,7 +15,7 @@ import styles from './Navbar.module.css';
  * On narrow viewports, a hamburger opens the off-canvas nav drawer (Step 5).
  * “Ask AI” opens the global assistant drawer without leaving the current page.
  */
-export default function Navbar({ title, subtitle, user }) {
+export default function Navbar({ title, user }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { mobileOpen, toggleMobileOpen } = useSidebar();
@@ -90,9 +90,6 @@ export default function Navbar({ title, subtitle, user }) {
 
         <div className={styles.navbar__titleBlock}>
           <h2 className={styles.navbar__pageTitle}>{title}</h2>
-          {subtitle ? (
-            <p className={styles.navbar__pageSubtitle}>{subtitle}</p>
-          ) : null}
         </div>
       </div>
 
@@ -105,7 +102,7 @@ export default function Navbar({ title, subtitle, user }) {
           type='text'
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          placeholder='Search questions by keyword…'
+          placeholder='Search questions…'
           className={styles['navbar__search-input']}
           aria-label='Search questions by keyword'
         />

@@ -1,7 +1,7 @@
 /**
  * Route map: public pages live outside `Layout`; forum tools use `Layout` + `ProtectedRoute`.
  * Add new `<Route>` entries here, then register the section in `config/navConfig.js`
- * (sidebar link and/or page title/subtitle) so the shell stays in sync.
+ * (sidebar link and/or page title) so the shell stays in sync.
  */
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';

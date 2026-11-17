@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const EMBEDDING_MODEL =
-  process.env.GEMINI_EMBEDDING_MODEL || "text-embedding-004";
+  process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY is not set");
@@ -56,6 +56,47 @@ export async function embedText(text, taskType = "RETRIEVAL_DOCUMENT") {
   }
 
   return values;
+}
+
+/**
+ * Generates one embedding per text, in the same order.
+ * @param {string[]} texts
+ * @param {"RETRIEVAL_DOCUMENT"|"RETRIEVAL_QUERY"} [taskType="RETRIEVAL_DOCUMENT"]
+ * @returns {Promise<Array<Array<number>>>}
+ */
+export async function embedTexts(texts, taskType = "RETRIEVAL_DOCUMENT") {
+  if (!Array.isArray(texts) || texts.length === 0) {
+    throw new Error("texts must be a non-empty array");
+  }
+
+  const result = await ai.models.embedContent({
+    model: EMBEDDING_MODEL,
+    contents: texts,
+    config: {
+      taskType,
+      outputDimensionality: 768,
+    },
+  });
+
+  const embeddings = result.embeddings ?? [];
+  if (embeddings.length !== texts.length) {
+    throw new Error(
+      `Expected ${texts.length} embeddings, received ${embeddings.length}`,
+    );
+  }
+
+  return embeddings.map((embedding, index) => {
+    const values = extractEmbeddingValues(embedding);
+    if (!Array.isArray(values) || values.length === 0) {
+      throw new Error(
+        `Gemini API did not return a valid embedding for item ${index}`,
+      );
+    }
+    if (!values.every((v) => typeof v === "number" && !Number.isNaN(v))) {
+      throw new Error(`Embedding ${index} contains invalid numeric values`);
+    }
+    return values;
+  });
 }
 
 /**

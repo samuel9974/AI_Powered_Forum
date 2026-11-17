@@ -9,15 +9,7 @@ const KNOWLEDGE_BASE_PATH = path.join(
   __dirname,
   "..",
   "..",
-  "EVANGADI NETWORKS KNOWLEDGE BASE.txt",
-);
-
-const KNOWLEDGE_BASE_PATH_FALLBACK = path.join(
-  __dirname,
-  "..",
-  "..",
-  "..",
-  "EVANGADI NETWORKS KNOWLEDGE BASE.txt",
+  "evangadi-info.txt",
 );
 
 /**
@@ -29,30 +21,34 @@ export function getKnowledgeBaseFilename() {
 }
 
 /**
- * Split knowledge-base text into meaningful chunks (paragraphs / non-empty lines).
+ * Split knowledge-base text into retrieval chunks.
+ * Blank-line paragraphs stay intact. A file that is one fact per line
+ * is split into one chunk per line.
  * @param {string} rawText
  * @returns {string[]}
  */
 export function chunkKnowledgeBaseText(rawText) {
-  const chunks = [];
-  const blocks = rawText.split(/\n\s*\n/);
+  const normalized = String(rawText || "").replace(/\r\n/g, "\n").trim();
+  if (!normalized) return [];
 
-  for (const block of blocks) {
-    const trimmed = block.trim();
-    if (trimmed.length >= 20) {
-      chunks.push(trimmed);
-    }
-  }
+  const paragraphs = normalized
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter((block) => block.length >= 20);
 
-  if (chunks.length === 0) {
-    rawText
+  if (paragraphs.length === 1 && paragraphs[0].includes("\n")) {
+    return paragraphs[0]
       .split("\n")
       .map((line) => line.trim())
-      .filter((line) => line.length >= 20)
-      .forEach((line) => chunks.push(line));
+      .filter((line) => line.length >= 20);
   }
 
-  return chunks;
+  if (paragraphs.length > 0) return paragraphs;
+
+  return normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 20);
 }
 
 /**
@@ -61,25 +57,11 @@ export function chunkKnowledgeBaseText(rawText) {
  * @throws {ServiceUnavailableError}
  */
 export async function readKnowledgeBaseText() {
-  let rawText;
-  const pathsToTry = [KNOWLEDGE_BASE_PATH, KNOWLEDGE_BASE_PATH_FALLBACK];
-  let lastErr;
-
-  for (const filePath of pathsToTry) {
-    try {
-      rawText = await fs.readFile(filePath, "utf8");
-      lastErr = null;
-      break;
-    } catch (err) {
-      lastErr = err;
-    }
-  }
-
-  if (!rawText) {
+  try {
+    return await fs.readFile(KNOWLEDGE_BASE_PATH, "utf8");
+  } catch (err) {
     throw new ServiceUnavailableError(
-      `Evangadi knowledge base file is missing on the server. (${lastErr?.code ?? "ENOENT"})`,
+      `Evangadi knowledge base file is missing on the server (${path.basename(KNOWLEDGE_BASE_PATH)}). (${err?.code ?? "ENOENT"})`,
     );
   }
-
-  return rawText;
 }

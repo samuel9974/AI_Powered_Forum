@@ -14,10 +14,16 @@
   flex-direction: column;
   width: var(--app-assistant-width, 26.5rem);
   max-width: 100%;
+  /* Prefer dynamic viewport; JS visualViewport overrides while the keyboard is open. */
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background-color: var(--surface);
   border-left: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
   animation: drawerSlideIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Avoid iOS overscroll that can push the composer under the keyboard. */
+  overscroll-behavior: contain;
 }
 
 .drawer__header {
@@ -166,6 +172,14 @@
   background-color: var(--error-light);
   border: 1px solid color-mix(in srgb, var(--error) 28%, transparent);
   border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+/* Keep the input + send button pinned above the keyboard. */
+.drawer__composer {
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background-color: var(--surface);
 }
 
 @keyframes drawerSlideIn {
@@ -189,12 +203,23 @@
   }
 }
 
-/* Narrow viewports: full-width panel over the page (close to continue). */
+/* Narrow viewports: full-width panel over the page (close to return). */
 @media (max-width: 899px) {
   .drawer {
     width: 100%;
     z-index: 80;
     border-left: none;
+    /* svh = visible area with browser chrome; JS still corrects for the keyboard. */
+    height: 100svh;
+    height: 100dvh;
+    max-height: 100svh;
+    max-height: 100dvh;
+    bottom: auto;
+  }
+
+  .drawer__composer {
+    /* Slightly taller tap target zone so the send button stays easy to hit. */
+    box-shadow: 0 -1px 0 var(--border);
   }
 }
 

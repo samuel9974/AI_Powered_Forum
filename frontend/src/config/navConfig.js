@@ -5,7 +5,7 @@ import { LayoutDashboard, MessageSquare, FileText } from 'lucide-react';
  *
  * Single source of truth for:
  * - Sidebar primary links (`NAV_ITEMS`)
- * - Navbar title / subtitle (`getPageMeta`)
+ * - Navbar title (`getPageMeta`)
  * - Ask CTA path (`ASK_QUESTION_PATH`)
  *
  * The AI assistant is opened from the top-bar “Ask AI” control (drawer),
@@ -22,7 +22,7 @@ export const ASK_QUESTION_PATH = '/questions/ask';
 
 /**
  * Primary sidebar navigation.
- * `label` = sidebar text; `title` / `subtitle` = Navbar chrome for that path.
+ * `label` = sidebar text; `title` = Navbar chrome for that path.
  */
 export const NAV_ITEMS = [
   {
@@ -30,24 +30,18 @@ export const NAV_ITEMS = [
     label: 'Home',
     path: '/dashboard',
     title: 'Home',
-    subtitle:
-      'Browse the feed, search by keyword, or run AI similarity search.',
   },
   {
     icon: MessageSquare,
     label: 'Your Topics',
     path: '/my-questions',
     title: 'Your topics',
-    subtitle:
-      'Questions you have posted. Open any thread to read replies or edit context.',
   },
   {
     icon: FileText,
     label: 'Knowledge Base',
     path: '/rag-documents',
     title: 'Knowledge base',
-    subtitle:
-      'Private PDF library: reader, semantic search, and AI answers with citations per document.',
   },
 ];
 
@@ -59,40 +53,34 @@ const EXTRA_PAGES = [
   {
     match: path => path === ASK_QUESTION_PATH,
     title: 'Ask a question',
-    subtitle:
-      'A clear title and reproducible steps get faster, more accurate answers.',
   },
   {
     match: path =>
       path.startsWith('/questions/') && path !== ASK_QUESTION_PATH,
     title: 'Discussion',
-    subtitle:
-      'Read the thread, review related topics, and reply with markdown if you can help.',
   },
   {
     match: path => path === '/chatbot',
     title: 'Evangadi assistant',
-    subtitle:
-      'Ask about Evangadi programs and policies. Answers use the official knowledge base with citations.',
   },
 ];
 
 /**
- * Resolve Navbar title/subtitle for the current location.
+ * Resolve Navbar title for the current location.
  * @param {string} pathname
- * @returns {{ title: string, subtitle: string }}
+ * @returns {{ title: string }}
  */
 export function getPageMeta(pathname) {
   const navItem = NAV_ITEMS.find(item => item.path === pathname);
   if (navItem) {
-    return { title: navItem.title, subtitle: navItem.subtitle };
+    return { title: navItem.title };
   }
 
   for (const page of EXTRA_PAGES) {
     if (page.match(pathname)) {
-      return { title: page.title, subtitle: page.subtitle };
+      return { title: page.title };
     }
   }
 
-  return { title: 'Forum', subtitle: '' };
+  return { title: 'Forum' };
 }

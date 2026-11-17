@@ -2,7 +2,10 @@
 
 /* Block: sidebar */
 .sidebar {
+    /* dvh/svh keep the footer (Logout under Learner) inside the visible mobile viewport;
+       100vh alone often sits under the browser chrome on phones. */
     height: 100vh;
+    height: 100dvh;
     width: var(--app-sidebar-current-width, 17rem);
     position: fixed;
     left: 0;
@@ -14,7 +17,7 @@
     display: flex;
     flex-direction: column;
     padding-top: var(--spacing-lg);
-    padding-bottom: var(--spacing-lg);
+    padding-bottom: max(var(--spacing-lg), env(safe-area-inset-bottom, 0px));
     z-index: 50;
     border-right: 1px solid var(--border);
     box-shadow: 1px 0 0 rgba(15, 23, 42, 0.04);
@@ -155,10 +158,12 @@
 /* Element: sidebar__nav */
 .sidebar__nav {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
     padding-top: var(--spacing-xs);
+    overflow-y: auto;
 }
 
 /* Element: sidebar__nav-item-wrapper */
@@ -247,6 +252,7 @@
     padding-left: var(--spacing-lg);
     padding-right: var(--spacing-lg);
     margin-top: auto;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
@@ -361,30 +367,36 @@
     position: relative;
     width: 100%;
     padding-left: 0.5rem;
-    /* 2 * 0.25rem = 0.5rem */
     padding-right: 0.5rem;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    /* 3 * 0.25rem = 0.75rem */
-    color: color-mix(in srgb, var(--error) 80%, transparent);
-    /* text-red-500/80 */
+    /* Solid error color — transparent mix was hard to see on mobile drawers. */
+    color: var(--error);
     transition: all var(--transition-base, 200ms ease-in-out);
     font-size: 0.75rem;
-    /* text-xs */
     font-weight: var(--font-medium, 500);
     background: none;
     border: none;
     cursor: pointer;
     text-align: left;
+    border-radius: var(--radius-md);
 }
 
 /* Pseudo-class: hover state for logout button */
 .sidebar__logout:hover {
     color: var(--error);
-    /* text-red-500 */
+    background-color: color-mix(in srgb, var(--error) 10%, transparent);
+}
+
+.sidebar__logout:focus {
+    outline: none;
+}
+
+.sidebar__logout:focus-visible {
+    box-shadow: var(--shadow-focus);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -534,6 +546,11 @@
 
 @media (max-width: 899px) {
     .sidebar {
+        /* Small viewport height keeps Logout under Learner above the browser UI. */
+        height: 100svh;
+        height: 100dvh;
+        max-height: 100svh;
+        max-height: 100dvh;
         width: min(var(--app-sidebar-width, 17rem), 85vw);
         transform: translateX(-105%);
         box-shadow: var(--shadow-lg, 0 10px 30px rgba(15, 23, 42, 0.18));
@@ -550,6 +567,24 @@
     .sidebar__header {
         flex-direction: row;
         align-items: flex-start;
+    }
+
+    /* Keep profile + Logout visible together at the bottom of the drawer. */
+    .sidebar__user {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .sidebar__profile {
+        margin-bottom: 0;
+    }
+
+    .sidebar__logout {
+        min-height: 2.5rem;
+        padding-left: 0.625rem;
+        padding-right: 0.625rem;
+        font-size: var(--text-sm);
     }
 }
 

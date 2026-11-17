@@ -1,6 +1,9 @@
 import { ServiceUnavailableError } from "../../../utils/errors/index.js";
 import { getChatbotStatusService } from "./get-chatbot-status.service.js";
-import { buildChatbotPrompt } from "./shared/chatbot-prompt.js";
+import {
+  buildChatbotPrompt,
+  presentChatbotAnswer,
+} from "./shared/chatbot-prompt.js";
 import {
   GEMINI_GENERATION_MODEL,
   generateChatbotContent,
@@ -44,12 +47,16 @@ export async function queryChatbotService({ message, history = [] }) {
     const response = await generateChatbotContent(prompt);
     const answer = getGeneratedText(response);
 
-    if (!answer) {
+    const visibleAnswer = presentChatbotAnswer(answer, {
+      hasHistory: history.length > 0,
+    });
+
+    if (!visibleAnswer) {
       throw new Error("Gemini response did not include answer text.");
     }
 
     return {
-      answer,
+      answer: visibleAnswer,
       citations: chunks.map((chunk, index) => ({
         ref: index + 1,
         chunkIndex: chunk.chunkIndex,

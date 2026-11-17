@@ -6,12 +6,36 @@ import ChatMessageList from '../../pages/ChatBot/components/ChatMessageList.jsx'
 import styles from './AssistantDrawer.module.css';
 
 /**
+ * Keep the fixed drawer inside the *visible* viewport while the mobile
+ * keyboard is open. Without this, `bottom: 0` sits under the keyboard and
+ * the send button disappears.
+ * @param {HTMLElement | null} element
+ */
+function syncDrawerToVisualViewport(element) {
+  if (!element) return;
+
+  const vv = window.visualViewport;
+  if (!vv) {
+    element.style.top = '';
+    element.style.height = '';
+    element.style.bottom = '';
+    return;
+  }
+
+  element.style.top = `${vv.offsetTop}px`;
+  element.style.height = `${vv.height}px`;
+  element.style.bottom = 'auto';
+}
+
+/**
  * Persistent right-rail assistant (Hostinger-style).
  * Stays open across in-app navigation and does not block the sidebar/main UI
  * on desktop — the shell reserves space beside the panel instead.
  */
 export default function AssistantDrawer() {
   const titleId = useId();
+  const drawerRef = useRef(null);
+  const composerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const {
     isDrawerOpen,
@@ -43,10 +67,57 @@ export default function AssistantDrawer() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isDrawerOpen, closeDrawer]);
 
+  // Reposition the drawer when the soft keyboard opens/closes on mobile.
+  useEffect(() => {
+    if (!isDrawerOpen) return undefined;
+
+    const drawer = drawerRef.current;
+    const vv = window.visualViewport;
+
+    const sync = () => syncDrawerToVisualViewport(drawer);
+    sync();
+
+    if (!vv) return undefined;
+
+    vv.addEventListener('resize', sync);
+    vv.addEventListener('scroll', sync);
+    window.addEventListener('resize', sync);
+
+    return () => {
+      vv.removeEventListener('resize', sync);
+      vv.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+      if (drawer) {
+        drawer.style.top = '';
+        drawer.style.height = '';
+        drawer.style.bottom = '';
+      }
+    };
+  }, [isDrawerOpen]);
+
   useEffect(() => {
     if (!isDrawerOpen) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isSending, isDrawerOpen]);
+
+  // When the user focuses the input, keep the composer (and send button) on screen.
+  useEffect(() => {
+    if (!isDrawerOpen) return undefined;
+
+    const composer = composerRef.current;
+    if (!composer) return undefined;
+
+    const onFocusIn = () => {
+      // Wait a beat for the keyboard animation, then pin the composer into view.
+      window.setTimeout(() => {
+        syncDrawerToVisualViewport(drawerRef.current);
+        composer.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      }, 150);
+    };
+
+    composer.addEventListener('focusin', onFocusIn);
+    return () => composer.removeEventListener('focusin', onFocusIn);
+  }, [isDrawerOpen]);
 
   if (!isDrawerOpen) return null;
 
@@ -55,6 +126,7 @@ export default function AssistantDrawer() {
 
   return (
     <aside
+      ref={drawerRef}
       className={styles.drawer}
       aria-labelledby={titleId}
       aria-label='Ask AI assistant'
@@ -131,15 +203,17 @@ export default function AssistantDrawer() {
               </p>
             ) : null}
 
-            <ChatInputPanel
-              message={draft}
-              onMessageChange={setDraft}
-              onSubmit={submitMessage}
-              isSending={isSending}
-              disabled={statusBlocked}
-              inputId='assistant-drawer-message'
-              compact
-            />
+            <div ref={composerRef} className={styles.drawer__composer}>
+              <ChatInputPanel
+                message={draft}
+                onMessageChange={setDraft}
+                onSubmit={submitMessage}
+                isSending={isSending}
+                disabled={statusBlocked}
+                inputId='assistant-drawer-message'
+                compact
+              />
+            </div>
           </>
         )}
       </div>

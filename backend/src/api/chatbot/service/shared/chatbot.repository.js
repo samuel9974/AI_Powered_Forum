@@ -1,4 +1,4 @@
-import { safeExecute } from "../../../../../db/db.config.js";
+import db, { safeExecute } from "../../../../../db/db.config.js";
 
 /**
  * Parses a stored embedding value into a numeric array.
@@ -43,28 +43,32 @@ export async function fetchAllChunksWithEmbeddings() {
 }
 
 /**
- * Removes all ingested chatbot chunks.
+ * Replaces the stored knowledge base in one transaction.
+ * Embeddings must already be generated. A failure rolls back to the previous rows.
+ * @param {Array<{chunkIndex: number, content: string, embedding: Array<number>}>} rows
  * @returns {Promise<void>}
  */
-export async function clearStoredChunks() {
-  await safeExecute("DELETE FROM chatbot_chunks", []);
-}
-
-/**
- * Inserts or updates one chatbot chunk row.
- * @param {Object} params
- * @param {number} params.chunkIndex
- * @param {string} params.content
- * @param {Array<number>} params.embedding
- * @returns {Promise<void>}
- */
-export async function insertChunk({ chunkIndex, content, embedding }) {
-  const sql = `
-    INSERT INTO chatbot_chunks (chunk_index, content, embedding)
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE
-      content = VALUES(content),
-      embedding = VALUES(embedding)
-  `;
-  await safeExecute(sql, [chunkIndex, content, JSON.stringify(embedding)]);
+export async function replaceStoredChunks(rows) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.execute("DELETE FROM chatbot_chunks");
+    const sql = `
+      INSERT INTO chatbot_chunks (chunk_index, content, embedding)
+      VALUES (?, ?, ?)
+    `;
+    for (const row of rows) {
+      await connection.execute(sql, [
+        row.chunkIndex,
+        row.content,
+        JSON.stringify(row.embedding),
+      ]);
+    }
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }

@@ -12,7 +12,7 @@ import styles from './Layout.module.css';
 /**
  * Authenticated shell: fixed sidebar + scrollable main column + footer.
  * On narrow viewports the sidebar becomes an off-canvas drawer.
- * Page titles/subtitles come from `config/navConfig.js` (same source as Sidebar).
+ * Page titles come from `config/navConfig.js` (same source as Sidebar).
  * Ask AI docks as a persistent right rail and stays open across navigation.
  */
 export default function Layout() {
@@ -20,7 +20,7 @@ export default function Layout() {
   const { user } = useAuth();
   const { mobileOpen, closeMobile } = useSidebar();
   const { isDrawerOpen } = useChatSession();
-  const { title, subtitle } = getPageMeta(location.pathname);
+  const { title } = getPageMeta(location.pathname);
 
   // Close the mobile nav drawer on navigation — not the Ask AI panel.
   useEffect(() => {
@@ -48,11 +48,7 @@ export default function Layout() {
       ) : null}
 
       <div className={styles.layout__content}>
-        <Navbar
-          title={title}
-          subtitle={subtitle}
-          user={user}
-        />
+        <Navbar title={title} user={user} />
         <main className={styles.layout__main}>
           <div className={styles.layout__mainInner}>
             <Outlet />

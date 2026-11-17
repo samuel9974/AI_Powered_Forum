@@ -412,6 +412,8 @@ button.chatBot__suggestionBtn:focus-visible {
   flex-shrink: 0;
   width: 2.35rem;
   height: 2.35rem;
+  min-width: 2.35rem;
+  min-height: 2.35rem;
   padding: 0;
   color: var(--on-primary);
   background: linear-gradient(
@@ -439,6 +441,14 @@ button.chatBot__suggestionBtn:focus-visible {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.chatBot__sendBtn:focus {
+  outline: none;
+}
+
+.chatBot__sendBtn:focus-visible {
+  box-shadow: var(--shadow-focus);
 }
 
 .chatBot__spin {
@@ -493,6 +503,29 @@ button.chatBot__suggestionBtn:focus-visible {
 
   .chatBot__composerHint {
     display: none;
+  }
+
+  .chatBot__composer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .chatBot__composerShell {
+    /* Keep send button aligned and visible while typing on small screens. */
+    align-items: center;
+    gap: 0.4rem;
+    padding-right: 0.4rem;
+  }
+
+  .chatBot__sendBtn {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+
+  /* When there is text to send, keep the button fully opaque and easy to spot. */
+  .chatBot__sendBtn:not(:disabled) {
+    opacity: 1;
   }
 }
 
